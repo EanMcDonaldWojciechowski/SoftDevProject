@@ -25,15 +25,10 @@ class Row : public Object {
   /** Setters: set the given column with the given value. Setting a column with
     * a value of the wrong type is undefined. */
   void set(size_t col, int val) {
-    // std::cout  << "in row set\n";
-    // std::cout  << schema->col_type(col) << "<--in row set\n";
-    // std::cout  << schema->rowSize_ << "<--rowsize in row set\n";
     if (schema->col_type(col) != 'I') {
       exit(1);
     }
-    // // std::cout << "Done with method\n";
     cols[col] = new IntColumn(1, val);
-    // std::cout << "Done with set \n";
   }
 
   void set(size_t col, float val) {
@@ -44,14 +39,10 @@ class Row : public Object {
   }
 
   void set(size_t col, bool val) {
-    // // std::cout << "in set bool in row file SIZE=" << schema->rowSize_ <<"\n";
     if (schema->col_type(col) != 'B') {
       exit(1);
     }
-    // // std::cout << "in set bool in row file\n";
     cols[col] = new BoolColumn(1, val);
-    // // std::cout << col << "<- col getting col value for bool\n";
-    // // std::cout << cols[col]->as_bool()->get(0) << "<-getting bool val\n";
   }
 
   /** The string is external. */
@@ -81,7 +72,6 @@ class Row : public Object {
   }
 
   bool get_bool(size_t col) {
-    // // std::cout << "inside get bool col=" << col << "\n";
     if (schema->col_type(col) != 'B') {
       exit(1);
     }
@@ -123,7 +113,6 @@ class Row : public Object {
 
    /** Type of the field at the given position. An idx >= width is  undefined. */
   char col_type(size_t idx) {
-    // // std::cout<< schema->rowSize_ <<" <--- schema row size in row get col_type method\n";
     if ((idx >= schema->rowSize_) || (idx < 0)) { // TODO: DO THIS FOR OTHER EXIT STATMENTS... ADD idx<0
       exit(1);
     }

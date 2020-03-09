@@ -18,4 +18,8 @@ class Rower : public Object {
       original object will be the last to be called join on. The join method
       is reponsible for cleaning up memory. */
   void join_delete(Rower* other) {}
+
+  virtual Rower* clone() {
+    return nullptr;
+  }
 };

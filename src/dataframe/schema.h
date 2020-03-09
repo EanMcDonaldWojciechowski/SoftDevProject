@@ -12,8 +12,6 @@ class Schema : public Object {
    size_t colSize_; // number of rows in a column or the size of the column
    size_t colCap_;
    char* colType;
-   String** rowNames;
-   String** colNames;
 
   /** Copying constructor */
   Schema(Schema& from) {
@@ -21,8 +19,6 @@ class Schema : public Object {
     colSize_ = from.colSize_;
     colCap_ = from.colCap_;
     colType = from.colType;
-    rowNames = from.rowNames;
-    colNames = from.colNames;
   }
 
   /** Create an empty schema **/
@@ -31,8 +27,6 @@ class Schema : public Object {
     colSize_ = 0;
     colCap_ = 2;
     colType = new char[0];
-    rowNames = new String*[colCap_];
-    colNames = new String*[0];
   }
 
   /** Create a schema from a string of types. A string that contains
@@ -48,58 +42,28 @@ class Schema : public Object {
     scmTypes[strlen(types) + 1] = '\0';
     colType = scmTypes;
     // std::cout << "schema constructor using char* " << colType << "\n";
-    rowNames = new String*[colCap_];
-    colNames = new String*[rowSize_];
-    for (int i = 0; i < rowSize_; i++) {
-      colNames[i] = nullptr;
-    }
   }
 
   /** Add a column of the given type and name (can be nullptr), name
     * is external. Names are expectd to be unique, duplicates result
     * in undefined behavior. */
-  void add_column(char typ, String* name) {
-    if (name != nullptr) {
-      for (int i = 0; i < rowSize_; i++) {
-        if (colNames[i] != nullptr) {
-          if (strcmp(colNames[i]->c_str(), name->c_str()) == 0) {
-            exit(1);
-          }
-        }
-      }
-    }
-    String **copy = new String*[rowSize_ + 1];
+  void add_column(char typ) {
     char *copyType = new char[rowSize_ + 1];
     for (int i = 0; i < rowSize_; i++) {
-        copy[i] = colNames[i];
         copyType[i] = colType[i];
     }
-    copy[rowSize_] = name;
     copyType[rowSize_] = typ;
 		rowSize_++;
-		delete[] colNames;
     delete[] colType;
-		colNames = copy;
     colType = copyType;
   }
 
   /** Add a row with a name (possibly nullptr), name is external.  Names are
    *  expectd to be unique, duplicates result in undefined behavior. */
-  void add_row(String* name) {
-    if (name != nullptr) {
-      for (int i = 0; i < colSize_; i++) {
-        if (strcmp(rowNames[i]->c_str(), name->c_str()) == 0) {
-          exit(1);
-        }
-      }
-    }
-    if (colSize_ >= colCap_ / 2) {
-      growColNames();
-    }
-    rowNames[colSize_] = name;
+  void add_row() {
     colSize_++;
   }
-
+/*
   void growColNames() {
     String **copy = new String*[colCap_ * 2];
     for (int i = 0; i < colSize_; i++) {
@@ -108,11 +72,11 @@ class Schema : public Object {
     colCap_ = colCap_ * 2;
 		delete[] rowNames;
 		rowNames = copy;
-  }
+  }*/
 
   /** Return name of row at idx; nullptr indicates no name. An idx >= width
     * is undefined. */
-  String* row_name(size_t idx) {
+/*  String* row_name(size_t idx) {
     if (idx >= colSize_) {
       exit(1);
     } else {
@@ -121,11 +85,11 @@ class Schema : public Object {
       }
       return rowNames[idx];
     }
-  }
+  }*/
 
   /** Return name of column at idx; nullptr indicates no name given.
     *  An idx >= width is undefined.*/
-  String* col_name(size_t idx) {
+/*  String* col_name(size_t idx) {
     if (idx >= rowSize_) {
       exit(1);
     } else {
@@ -134,7 +98,7 @@ class Schema : public Object {
       }
       return colNames[idx];
     }
-  }
+  }*/
 
   /** Return type of column at idx. An idx >= width is undefined. */
   char col_type(size_t idx) {
@@ -147,7 +111,7 @@ class Schema : public Object {
   }
 
   /** Given a column name return its index, or -1. */
-  int col_idx(const char* name) {
+  /*int col_idx(const char* name) {
     if (name == nullptr) {
       return -1;
     }
@@ -157,10 +121,10 @@ class Schema : public Object {
       }
     }
     return -1;
-  }
+  }*/
 
   /** Given a row name return its index, or -1. */
-  int row_idx(const char* name) {
+/*  int row_idx(const char* name) {
     if (name == nullptr) {
       return -1;
     }
@@ -170,7 +134,7 @@ class Schema : public Object {
       }
     }
     return -1;
-  }
+  }*/
 
   /** The number of columns */
   size_t width() {
