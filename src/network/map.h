@@ -1,0 +1,259 @@
+#pragma once
+#include "helper.h"
+#include "object.h"
+#include "string.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+/*************************************************************************
+ * Key::
+ * Stores values by key
+ */
+class Key : public Object {
+ public:
+   char* name;
+   size_t node;
+
+   Key(const char* name_, size_t node_) {
+     name = name_;
+     node = node_;
+   }
+
+   ~Key() {
+     delete[] name;
+   }
+
+   size_t hash() {
+     // TODO
+   }
+
+};
+
+/*************************************************************************
+ * Key::
+ * Stores values by key
+ */
+class Value : public Object {
+ public:
+   char* value;
+
+   Value(char* value_) {
+     value = value_;
+   }
+
+   ~Value() {
+     delete[] value;
+   }
+
+};
+
+// Hashmap_pair is a node, which is used to to store a pair of key and value.
+// Later a list of Hashmap_pair will be stored into Hashmap data structure.
+// It inherit Object class.
+class Hashmap_pair : public Object {
+    public:
+        Object* key_;
+        Object* val_;
+
+        Hashmap_pair(Object *key, Object *val) : Object() {
+            key_ = key;
+            val_ = val;
+
+        }
+        ~Hashmap_pair() {
+            delete key_;
+            delete val_;
+        }
+};
+
+// Hashmap class stores a list of hashmap_pairs, which contains equal number
+// of keys and values.
+// It has size and capcity, which size is the number of key-value pairs,
+// and capcity is the physical size of hashmap.
+class Hashmap : public Object {
+    public:
+        Hashmap_pair **data;
+        size_t size_;
+        size_t capacity_;
+        size_t hash_code;
+        //constructor
+        //capcity will be initilized as 4, size is 0 by default.
+        Hashmap() {
+            data = new Hashmap_pair*[4];
+            size_ = 0;
+            capacity_ = 4;
+            hash_code = 0;
+            for (size_t i = 0; i < capacity_; i++) {
+              data[i] = nullptr;
+            }
+        }
+
+        Hashmap(size_t cap) {
+          capacity_ = cap;
+          size_ = 0;
+          hash_code = 0;
+          data = new Hashmap_pair*[capacity_];
+          for (size_t i = 0; i < capacity_; i++) {
+              data[i] = nullptr;
+          }
+        }
+
+        // destructor
+        ~Hashmap() {
+            delete [] data;
+        }
+
+        // Double the capacity of hashmap when needed
+        void expand() {
+          Hashmap *copy = new Hashmap(capacity_ * 2);
+          for (int i = 0; i < capacity_; i++) {
+            if (!isNullptr(data[i])){
+              copy->put(data[i]->key_, data[i]->val_);
+            }
+          }
+          delete[] data;
+          data = copy->data;
+          capacity_ = capacity_ * 2;
+        }
+
+        // Returns the value to which the specified key is mapped,
+        // or null if this map contains no mapping for the key.
+        Object* get(Object *key) {
+          size_t hashKey = (key->hash() % capacity_);
+          //std::cout << "saved key " << data[hashKey]->key_ << " key " << key <<  " equals " << data[hashKey]->key_->equals(key) <<  "\n" ;
+          while(!data[hashKey]->key_->equals(key)) {
+            hashKey = (hashKey + 1) % capacity_;
+          }
+          return data[hashKey]->val_;
+        }
+
+        // Associates the specified value with the specified key in this map.
+        void put(Object *key, Object *val) {
+          if ((size_ + 1) * 2 > capacity_) {
+            expand();
+          }
+          size_t hashKey = (key->hash() % capacity_);
+          size_t i = hashKey;
+          Hashmap_pair *temp = nullptr;
+          Hashmap_pair *newObject = new Hashmap_pair(key, val);
+
+
+          bool dupKey = false;
+          // Logic for finding when the next spot in map's hash equals key's hash
+          // Keep going until we reach the end of the line of objects in the map
+          while(!isNullptr(data[i])) {
+            if (data[i]->key_->equals(key)) {
+              dupKey = true;
+              break;
+            }
+            // Either the hash of the object in the current spot is lower then \
+            // the key's hash
+            if ((data[i]->key_->hash() % capacity_) < hashKey) {
+              // If so, we just look compare the next spot in the map and leave
+              // this alone
+              i = ((i + 1) % capacity_);
+            } else {
+              // otherwise we insert the key in the current spot and move the
+              // thing that is in our spot forward
+              temp = data[i];
+              data[i] = newObject;
+              newObject = temp;
+              i = ((i + 1) % capacity_);
+            }
+          }
+          if (!dupKey) {
+            data[i] = newObject;
+            size_++;
+          }
+        };
+
+        void printall() {
+          for (size_t i = 0; i < capacity_; i++) {
+            if (isNullptr(data[i])) {
+              std::cout << i << ": null \n";
+            }
+            else {
+              String *castedO = dynamic_cast<String*>(data[i]->key_);
+              std::cout << i << ": " << castedO->getStrValue() << "\n";
+            }
+          }
+          std::cout << "\n";
+        }
+
+        // Removes the mapping for the specified key from this map if present.
+        void remove(Object *key) {
+          size_t hashKey = (key->hash() % capacity_);
+          //std::cout << "hashkey " << hashKey << "\n";
+          size_t i = hashKey;
+          while(!data[i]->key_->equals(key)) {
+            // stop this loop if we cant find it. otherwise endless loop
+            i = (i + 1) % capacity_;
+          }
+          data[i] = nullptr;
+          size_--;
+          i = (i + 1) % capacity_;
+          Hashmap_pair *temp = nullptr;
+
+          while(!isNullptr(data[i]) && (data[i]->key_->hash() % capacity_) != i) {
+            temp = data[i];
+            data[(i - 1) % capacity_] = temp;
+            data[i] = nullptr;
+            i = (i + 1) % capacity_;
+          }
+
+
+        }
+
+        // Returns the number of key-value mappings in this map.
+        size_t size() {
+          return size_;
+        }
+
+        // Returns a list view of the keys contained in this map.
+        Object** key_array() {
+          Object ** ans = new Object*[size_];
+          size_t iteration = 0;
+          for (int i = 0; i < capacity_; i++) {
+            if (!isNullptr(data[i])){
+              ans[iteration] = data[i]->key_;
+              iteration++;
+            }
+          }
+          return ans;
+        }
+
+        // Check if two Hashmaps are equal.
+        // the input hashmap is an object.
+        virtual bool equals(Object *map) { // TODO: change to virtual
+          Hashmap *castedO = dynamic_cast<Hashmap*>(map);
+          if (isNullptr(castedO)) {
+              return false;
+          }
+          for (int i = 0; i < capacity_; i++) {
+            if (isNullptr(data[i])){
+              if (!isNullptr(castedO->data[i])) {
+                return false;
+              }
+            } else {
+              if (isNullptr(castedO->data[i]))  {
+                return false;
+              }
+              if (!data[i]->equals(castedO->data[i])) {
+                return false;
+              }
+            }
+          }
+          return true;
+        }
+
+        // THIS IS OURS REMOVE LATER
+        size_t hash() {
+          Object **keys = key_array();
+          size_t totalHash = capacity_;
+          for (int i = 0; i < size_; i++) {
+            totalHash += keys[i]->hash();
+          }
+          hash_code = totalHash;
+          return totalHash;
+        }
+};
