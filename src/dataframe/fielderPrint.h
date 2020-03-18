@@ -1,4 +1,4 @@
-#include "helper.h"
+// #include "helper.h"
 /*****************************************************************************
  * Fielder::
  * A field vistor invoked by Row.
@@ -19,25 +19,31 @@ public:
     dataframe. */
   virtual void start(size_t r) {
     rowIdx = r;
-    p("row index:"); p(r); p("   ");
+    // p("row index:"); p(r); p("   ");
+    std::cout << "row index: " << r << "   ";
   }
 
   /** Called for fields of the argument's type with the value of the field. */
   virtual void accept(bool b) {
-    p(b); p("   ");
+    //p(b); p("   ");
+    std::cout << b << "   ";
   }
   virtual void accept(float f) {
-    p(f); p("   ");
+    //p(f); p("   ");
+    std::cout << f << "   ";
   }
   virtual void accept(int i) {
-    p(i); p("   ");
+    //p(i); p("   ");
+    std::cout << i << "   ";
   }
   virtual void accept(String* s) {
-    p(s->c_str()); p("   ");
+    //p(s->c_str()); p("   ");
+    std::cout << s->c_str() << "   ";
   }
 
   /** Called when all fields have been seen. */
   virtual void done() {
-    pln();
+    // pln();
+    std::cout << "\n";
   }
 };

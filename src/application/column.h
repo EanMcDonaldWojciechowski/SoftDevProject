@@ -179,7 +179,7 @@ class BoolColumn : public Column {
     return type_bool;
   }
   bool get(size_t idx) {
-    printf("idx: %d count: %d\n", idx, count_);
+    // printf("idx: %d count: %d\n", idx, count_);
     if (idx >= count_) {
       exit(1);
     }
@@ -220,7 +220,7 @@ class BoolColumn : public Column {
       char* ret = new char[512];
       bool values_ = get(i);
       sprintf(ret, "%d", values_);
-      std::cout << "INSIDE GET CHAR IN BOOL GET:" << values_ << " ret " << ret << "\n";
+      // std::cout << "INSIDE GET CHAR IN BOOL GET:" << values_ << " ret " << ret << "\n";
       return ret;
   }
 };
@@ -359,7 +359,7 @@ class FloatColumn : public Column {
       char* ret = new char[512];
       float values_ = get(i);
       sprintf(ret, "%f", values_);
-      std::cout << "INSIDE GET CHAR IN FLOAT GET:" << values_ << " ret " << ret << "\n";
+      // std::cout << "INSIDE GET CHAR IN FLOAT GET:" << values_ << " ret " << ret << "\n";
       return ret;
   }
 };
@@ -517,7 +517,7 @@ class IntColumn : public Column {
       char* ret = new char[512];
       int values_ = get(i);
       sprintf(ret, "%d", values_);
-      std::cout << "INSIDE GET CHAR IN INT GET:" << values_ << " ret " << ret << "\n";
+      // std::cout << "INSIDE GET CHAR IN INT GET:" << values_ << " ret " << ret << "\n";
       return ret;
   }
 };

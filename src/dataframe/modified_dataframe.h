@@ -7,11 +7,12 @@
 #include "../application/string.h"
 #include "../application/column.h"
 #include "schema.h"
+#include "helper.h"
 #include "fielder.h"
-//#include "fielderPrint.h"
+#include "fielderPrint.h"
 #include "row.h"
 #include "rower.h"
-//#include "printRower.h"
+#include "printRower.h"
 //#include "add2IntRower.h"
 #include <thread>
 
@@ -79,9 +80,28 @@ class DataFrame : public Object {
       temp[i] = column[i];
     }
     temp[scm->width() - 1] = col;
-
     delete[] column;
     column = temp;
+    if (scm->length() == 0) {
+      if (col->get_type() == 'I') {
+        // std::cout<< "value at intcols: " << col->as_int()->get(1) << "\n";
+        scm->colSize_ = col->as_int()->count_;
+      } else if (col->get_type() == 'B') {
+        // std::cout<< "value at boolcols: " << col->as_bool()->get(1) << "\n";
+        scm->colSize_ = col->as_bool()->count_;
+      } else if (col->get_type() == 'F') {
+        // std::cout<< "value at floatcols: " << col->as_float()->get(1) << "\n";
+        scm->colSize_ = col->as_float()->count_;
+      } else if (col->get_type() == 'S') {
+        // std::cout<< "value at strcols: " << col->as_string()->get(1)->c_str() << "\n";
+        scm->colSize_ = col->as_string()->count_;
+      }
+
+    }
+    // else if (scm->length() != col->count_) {
+    //   std::cout << "Error columns are different lengths.\n";
+    //   exit(1);
+    // }
   }
 
   /** Return the value at the given column and row. Accessing rows or
@@ -377,23 +397,13 @@ class DataFrame : public Object {
   }
 
   /** Print the dataframe in SoR format to standard output. */
-  /*
   void print() {
-    Schema s1 = *scm;
-    Row *r = new Row(s1);
-    for (int cName = 0; cName < scm->width(); cName++) {
-      p("   ");
-      if (scm->col_name(cName) == nullptr) {
-        p("Index:");p(cName);
-      } else {
-        p(scm->col_name(cName)->c_str());
-      }
-    }
-    pln();
+    Row *r = new Row(*scm);
+    // std::cout << "len " << scm->length() << " \n";
     for (int i = 0; i < scm->length(); i++) {
       this->fill_row(i, *r);
       PrintRower* pr = new PrintRower();
       pr->accept(*r);
     }
-  }*/
+  }
 };

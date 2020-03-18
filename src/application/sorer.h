@@ -71,11 +71,8 @@ class SOR : public Object {
         // Reads in the data from the file starting at the from byte
         // and reading at most len bytes
         void read(FILE* f, size_t from, size_t len) {
-          std::cout << "before infer_columns_ in read" << "\n";
             infer_columns_(f, from, len);
-            std::cout << "before parse_ in read" << "\n";
             parse_(f, from, len);
-            std::cout << "after parse_ in read" << "\n";
         }
 
         // reallocates columns array if more space is needed.
@@ -93,11 +90,8 @@ class SOR : public Object {
 
         // moves the file pointer to the start of the next line.
         void seek_(FILE* f, size_t from) {
-          std::cout << "in seek from is " << from << "\n";
             if (from == 0) {
-              std::cout << "before fseek \n";
                 fseek(f, from, SEEK_SET);
-                std::cout << "after fseek \n";
             } else {
                 char buf[buff_len];
                 fseek(f, from - 1, SEEK_SET);
@@ -107,9 +101,7 @@ class SOR : public Object {
 
         // infers and creates the column objects
         void infer_columns_(FILE* f, size_t from, size_t len) {
-          std::cout << "start infer \n";
             seek_(f, from);
-            std::cout << "after seek start infer \n";
             char buf[buff_len];
 
             size_t total_bytes = 0;
@@ -151,7 +143,7 @@ class SOR : public Object {
                 delete[] row;
 
             }
-            std::cout << "end infer \n";
+            // std::cout << "end infer \n";
         }
 
         // Find the start of the field value and null terminate it.
