@@ -16,6 +16,11 @@ int main(int argc, char** argv) {
   // std::cout << " length " << df->scm->length() << "\n";
   // std::cout << "past create df" << "\n";
   // std::cout << "cols size " << df->ncols();
+  std::cout << "\n\n\n_____________Actual Dataframe________________\n" << "\n";
+  df->print();
+  Rower *r = new RowerAddTwo();
+  std::cout << "\n\n\n_____________Adding two to all ints________________\n" << "\n";
+  df->map(*r);
   df->print();
   std::cout << "COMPLETED" << "\n";
 }
