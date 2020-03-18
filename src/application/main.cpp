@@ -1,5 +1,5 @@
 //lang::CwC
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <stdio.h>      /* files */
 #include <string.h>     /* strcmp */
 #include <time.h>
@@ -103,9 +103,10 @@ int main(int argc, char** argv) {
 
     } else if (a_print) {
         char* temp = reader->get_value(col_arg1, col_arg2);
+
         if (temp != nullptr) {
             printf("%s\n", temp);
-        } 
+        }
     } else if (a_missing) {
         printf("%d\n", reader->is_missing(col_arg1, col_arg2));
     }

@@ -3,6 +3,9 @@
 #include "string.h"
 #include "helpers.h"
 #include <stdarg.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
 
 
 class IntColumn;
@@ -75,7 +78,10 @@ class Column : public Object {
   /** Return the type of this column as a char: 'S', 'B', 'I' and 'F'. **/
   virtual char get_type() { return 'N';}
   // get string rep of element at ith index
-  virtual char* get_char(size_t i) {return nullptr;}
+  virtual char* get_char(size_t i) {
+    printf("This is getChar in FAKE");
+    return nullptr;
+  }
   virtual bool can_add(char* c) {return 0;}
   virtual char get_enum_type() { return -1;}
 };
@@ -172,8 +178,8 @@ class BoolColumn : public Column {
   char get_enum_type() {
     return type_bool;
   }
-
   bool get(size_t idx) {
+    printf("idx: %d count: %d\n", idx, count_);
     if (idx >= count_) {
       exit(1);
     }
@@ -213,7 +219,8 @@ class BoolColumn : public Column {
   char* get_char(size_t i) {
       char* ret = new char[512];
       bool values_ = get(i);
-      sprintf(ret, "%f", values_);
+      sprintf(ret, "%d", values_);
+      std::cout << "INSIDE GET CHAR IN BOOL GET:" << values_ << " ret " << ret << "\n";
       return ret;
   }
 };
@@ -352,6 +359,7 @@ class FloatColumn : public Column {
       char* ret = new char[512];
       float values_ = get(i);
       sprintf(ret, "%f", values_);
+      std::cout << "INSIDE GET CHAR IN FLOAT GET:" << values_ << " ret " << ret << "\n";
       return ret;
   }
 };
@@ -508,7 +516,8 @@ class IntColumn : public Column {
   char* get_char(size_t i) {
       char* ret = new char[512];
       int values_ = get(i);
-      sprintf(ret, "%f", values_);
+      sprintf(ret, "%d", values_);
+      std::cout << "INSIDE GET CHAR IN INT GET:" << values_ << " ret " << ret << "\n";
       return ret;
   }
 };
@@ -643,7 +652,7 @@ class StringColumn : public Column {
     if (c == nullptr || *c == '\0') {
         return true;
     }
-    return infer_type(c) == 2; // enum type
+    return infer_type(c) == 3; // enum type
   }
   // get string rep of element at ith index
   char* get_char(size_t i) {

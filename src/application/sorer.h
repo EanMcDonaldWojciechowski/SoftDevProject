@@ -1,12 +1,8 @@
 //lang:CwC
 #pragma once
-#include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
-
-#include "object.h"
-#include "column.h"
 #include "helpers.h"
+#include "../dataframe/modified_dataframe.h"
 
 // The maximum length of a line buffer. No lines over 4095 bytes
 static const int buff_len = 4096;
@@ -58,7 +54,9 @@ class SOR : public Object {
         // What is the value for the given column index and row index?
         // If the coluumn or row index are too large a nullptr is returned
         char* get_value(size_t col_index, size_t row_index) {
+            // printf("get value start \n");
             if (col_index >= len_) {
+                // printf("get value ret null \n");
                 return nullptr;
             }
             return cols_[col_index]->get_char(row_index);
@@ -73,8 +71,11 @@ class SOR : public Object {
         // Reads in the data from the file starting at the from byte
         // and reading at most len bytes
         void read(FILE* f, size_t from, size_t len) {
+          std::cout << "before infer_columns_ in read" << "\n";
             infer_columns_(f, from, len);
+            std::cout << "before parse_ in read" << "\n";
             parse_(f, from, len);
+            std::cout << "after parse_ in read" << "\n";
         }
 
         // reallocates columns array if more space is needed.
@@ -92,8 +93,11 @@ class SOR : public Object {
 
         // moves the file pointer to the start of the next line.
         void seek_(FILE* f, size_t from) {
+          std::cout << "in seek from is " << from << "\n";
             if (from == 0) {
+              std::cout << "before fseek \n";
                 fseek(f, from, SEEK_SET);
+                std::cout << "after fseek \n";
             } else {
                 char buf[buff_len];
                 fseek(f, from - 1, SEEK_SET);
@@ -103,7 +107,9 @@ class SOR : public Object {
 
         // infers and creates the column objects
         void infer_columns_(FILE* f, size_t from, size_t len) {
+          std::cout << "start infer \n";
             seek_(f, from);
+            std::cout << "after seek start infer \n";
             char buf[buff_len];
 
             size_t total_bytes = 0;
@@ -145,6 +151,7 @@ class SOR : public Object {
                 delete[] row;
 
             }
+            std::cout << "end infer \n";
         }
 
         // Find the start of the field value and null terminate it.
@@ -251,11 +258,39 @@ class SOR : public Object {
                     if (i >= num_fields || row[i] == nullptr) {
                         cols_[i] = nullptr;
                     } else {
-                        cols_[i]->push_back(row[i]);
+                        char type = cols_[i]->get_type();
+                        char* pEnd = new char[512];
+                        if (type == 'B') {
+                          bool val = strtol(row[i], &pEnd, 10);
+
+                          cols_[i]->push_back(val);
+                        } else if (type == 'I') {
+                          int val = strtol(row[i], &pEnd, 10);
+
+                          cols_[i]->push_back(val);
+                        } else if (type == 'F') {
+                          float val = strtod(row[i], &pEnd);
+
+                          cols_[i]->push_back(val);
+                        } else {
+                          String *wrap = new String(row[i]);
+                          cols_[i]->push_back(wrap);
+                        }
                     }
                 }
                 delete[] row;
 
             }
+        }
+
+        // Assumes
+        // Converts the columns into a dataframe and returns the dataframe
+        DataFrame* sorToDataframe() {
+          Schema *s = new Schema();
+          DataFrame *ret = new DataFrame(*s);
+          for (size_t i = 0; i < len_; i++) {
+            ret->add_column(cols_[i]);
+          }
+          return ret;
         }
 };

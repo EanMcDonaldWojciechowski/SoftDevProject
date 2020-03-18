@@ -3,13 +3,9 @@
 #include <stdarg.h>
 #include <iostream>
 #include <string.h>
-#include "object.h"
-#include "string.h"
-#include "column.h"
-#include "intColumn.h"
-#include "stringColumn.h"
-#include "floatColumn.h"
-#include "boolColumn.h"
+#include "../application/object.h"
+#include "../application/string.h"
+#include "../application/column.h"
 #include "schema.h"
 #include "fielder.h"
 //#include "fielderPrint.h"
