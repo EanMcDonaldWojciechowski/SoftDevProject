@@ -15,7 +15,10 @@
 #include "printRower.h"
 #include "RowerAddTwoToInts.h"
 #include <thread>
+// #include "../network/KVStore.h"
 
+class KVStore;
+class Key;
 // class IntColumn;
 // class BoolColumn;
 // class FloatColumn;
@@ -375,7 +378,7 @@ class DataFrame : public Object {
     }
 
 
-    std::cout  << "schema len after pmap: "<< scm->length() <<  " \n";
+    // std::cout  << "schema len after pmap: "<< scm->length() <<  " \n";
   }
 
   /** Create a new dataframe, constructed from rows for which the given Rower
@@ -406,4 +409,61 @@ class DataFrame : public Object {
       pr->accept(*r);
     }
   }
+
+  /** Stores float values in KVStore and returns it as a dataframe */
+  DataFrame fromArray(Key *key, KVStore *kv, size_t size, double* vals) {
+    Column *c = new FloatColumn();
+    for (int i = 0; i < size; i++) {
+      c->as_float()->push_back((float)vals[i]);
+    }
+    Schema *s = new Schema();
+    DataFrame *df = new DataFrame(*s);
+    df->add_column(c);
+
+    kv->put(key, df);
+    return df;
+  }
+
+  /** Stores int values in KVStore and returns it as a dataframe */
+  DataFrame fromArray(Key *key, KVStore *kv, size_t size, int* vals) {
+    Column *c = new IntColumn();
+    for (int i = 0; i < size; i++) {
+      c->as_int()->push_back((int)vals[i]);
+    }
+    Schema *s = new Schema();
+    DataFrame *df = new DataFrame(*s);
+    df->add_column(c);
+
+    kv->put(key, df);
+    return df;
+  }
+
+  /** Stores bool values in KVStore and returns it as a dataframe */
+  DataFrame fromArray(Key *key, KVStore *kv, size_t size, bool* vals) {
+    Column *c = new BoolColumn();
+    for (int i = 0; i < size; i++) {
+      c->as_bool()->push_back((bool)vals[i]);
+    }
+    Schema *s = new Schema();
+    DataFrame *df = new DataFrame(*s);
+    df->add_column(c);
+
+    kv->put(key, df);
+    return df;
+  }
+
+  /** Stores String values in KVStore and returns it as a dataframe */
+  DataFrame fromArray(Key *key, KVStore *kv, size_t size, String* vals) {
+    Column *c = new StringColumn();
+    for (int i = 0; i < size; i++) {
+      c->as_string()->push_back((String)vals[i]);
+    }
+    Schema *s = new Schema();
+    DataFrame *df = new DataFrame(*s);
+    df->add_column(c);
+
+    kv->put(key, df);
+    return df;
+  }
+
 };

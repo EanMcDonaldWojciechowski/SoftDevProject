@@ -1,33 +1,51 @@
 #pragma once
-#include "helper.h"
-#include "object.h"
-#include "string.h"
-#include <stdio.h>
-#include <stdlib.h>
+// #include "helper.h"
+// #include "object.h"
+// #include "string.h"
+// #include <stdio.h>
+// #include <stdlib.h>
 
 /*************************************************************************
  * Key::
  * Stores values by key
  */
-class Key : public Object {
- public:
-   char* name;
-   size_t node;
+ class Key : public Object {
+   public:
+     char* key;
+     size_t nodeIndex;
 
-   Key(const char* name_, size_t node_) {
-     name = name_;
-     node = node_;
-   }
+     Key(char* key_, size_t nodeIndex_) {
+       key = key_;
+       nodeIndex = nodeIndex_;
+     }
 
-   ~Key() {
-     delete[] name;
-   }
+     ~Key() {
+       delete[] key;
+     }
 
-   size_t hash() {
-     // TODO
-   }
+     size_t hash() {
+       unsigned long hash = 5381;
+       int c;
+       int i = 0;
+       char *str = new char[strlen(key)];
+       str = strcpy(str, key);
+       while (c = str[i]) {
+         hash = ((hash << 5) + hash) + c;
+         i++;
+       }
+       delete[] str;
+       hash_ = hash;
+       return hash_;
+     }
 
-};
+     bool equals(Object* o) {
+       Key *castedO = dynamic_cast<Key*>(o);
+       if (castedO == nullptr) {
+           return false;
+       }
+       return (strcmp(this->key, castedO->key) == 0);
+    }
+ };
 
 /*************************************************************************
  * Key::
@@ -44,6 +62,7 @@ class Value : public Object {
    ~Value() {
      delete[] value;
    }
+
 
 };
 
@@ -107,7 +126,7 @@ class Hashmap : public Object {
         void expand() {
           Hashmap *copy = new Hashmap(capacity_ * 2);
           for (int i = 0; i < capacity_; i++) {
-            if (!isNullptr(data[i])){
+            if (!(data[i] == nullptr)) {
               copy->put(data[i]->key_, data[i]->val_);
             }
           }
@@ -141,7 +160,7 @@ class Hashmap : public Object {
           bool dupKey = false;
           // Logic for finding when the next spot in map's hash equals key's hash
           // Keep going until we reach the end of the line of objects in the map
-          while(!isNullptr(data[i])) {
+          while(!(data[i] == nullptr)) {
             if (data[i]->key_->equals(key)) {
               dupKey = true;
               break;
@@ -167,18 +186,18 @@ class Hashmap : public Object {
           }
         };
 
-        void printall() {
-          for (size_t i = 0; i < capacity_; i++) {
-            if (isNullptr(data[i])) {
-              std::cout << i << ": null \n";
-            }
-            else {
-              String *castedO = dynamic_cast<String*>(data[i]->key_);
-              std::cout << i << ": " << castedO->getStrValue() << "\n";
-            }
-          }
-          std::cout << "\n";
-        }
+        // void printall() {
+        //   for (size_t i = 0; i < capacity_; i++) {
+        //     if (data[i] == nullptr) {
+        //       std::cout << i << ": null \n";
+        //     }
+        //     else {
+        //       String *castedO = dynamic_cast<String*>(data[i]->key_);
+        //       std::cout << i << ": " << castedO->getStrValue() << "\n";
+        //     }
+        //   }
+        //   std::cout << "\n";
+        // }
 
         // Removes the mapping for the specified key from this map if present.
         void remove(Object *key) {
@@ -194,7 +213,7 @@ class Hashmap : public Object {
           i = (i + 1) % capacity_;
           Hashmap_pair *temp = nullptr;
 
-          while(!isNullptr(data[i]) && (data[i]->key_->hash() % capacity_) != i) {
+          while(!(data[i] == nullptr) && (data[i]->key_->hash() % capacity_) != i) {
             temp = data[i];
             data[(i - 1) % capacity_] = temp;
             data[i] = nullptr;
@@ -214,7 +233,7 @@ class Hashmap : public Object {
           Object ** ans = new Object*[size_];
           size_t iteration = 0;
           for (int i = 0; i < capacity_; i++) {
-            if (!isNullptr(data[i])){
+            if (!(data[i] == nullptr)){
               ans[iteration] = data[i]->key_;
               iteration++;
             }
@@ -226,16 +245,16 @@ class Hashmap : public Object {
         // the input hashmap is an object.
         virtual bool equals(Object *map) { // TODO: change to virtual
           Hashmap *castedO = dynamic_cast<Hashmap*>(map);
-          if (isNullptr(castedO)) {
+          if (castedO == nullptr) {
               return false;
           }
           for (int i = 0; i < capacity_; i++) {
-            if (isNullptr(data[i])){
-              if (!isNullptr(castedO->data[i])) {
+            if (data[i] == nullptr){
+              if (!(castedO->data[i] == nullptr)) {
                 return false;
               }
             } else {
-              if (isNullptr(castedO->data[i]))  {
+              if (castedO->data[i] == nullptr)  {
                 return false;
               }
               if (!data[i]->equals(castedO->data[i])) {
