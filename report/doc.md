@@ -1,8 +1,8 @@
-03/18/2020
+Note: We are including both Milestone 1 and Milestone 2 in this paper. Please remember to add grades for both of those assignments when you give us feedback. Thanks!
 
 Ean Wojciechowski and Hiren Patel
 Software Development
-03/09/2020
+03/21/2020
 
 Introduction: where we give a high-level description of the eau2 system.
 
@@ -24,7 +24,13 @@ Networking Level:
 
 Each KVStore has a client field. This field is an instance of a client node. A KVStore will construct a client node during instantiation and connect its node to the server. The server will then pass on each client’s information to every other client so that they can talk to each other directly. When a KVStore needs to get or put data in a remote node it will use its client node field to communicate with the required node. The client node will construct the proper message to send through the wire and the receiving client will decode the message and pass it to the KVStore so that the KVStore can get the value for its map for that key and pass that value back to the requesting node.
 
+Sorer:
+We want to parse a sor file and create a dataframe. The sorer will go through each field in the file, construct the schema, populate the columns, and create a dataframe at the end.
+
 Implementation: where we describe how the system is built, this can include a description of the classes and their API, but only the class you deem relevant and worth describing. (For example: do not describe the utility classes.)
+
+Sorer:
+Our original sorer implementation was created in Python, so we chose to use cs4500-a1p1’s sorer. To interface our DataFrame with their sorer we made a few changes to their implementation. We created a new method sorToDataframe, which would convert a read sor file into a dataframe. We refactored their adapter to work with our column implementation, giving us the ability to read data from a sor file and add it column by column to a dataframe.
 
 Application:
 Currently, the application class is very simple and contains two fields: nodeIndex and kv. Each instance of the application class (which will be run on each node or machine) will have a local kv store and a nodeIndex indicating the index of this node.
