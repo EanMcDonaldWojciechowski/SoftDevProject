@@ -11,12 +11,13 @@ int main(int argc, char** argv) {
 
   KVStore *kv = new KVStore(0);
   Key *k = new Key("main", 0);
-  DataFrame *fromArrayDF =DataFrame::fromArray(k, kv, SZ, vals);
-  std::cout << "Printing fromArray DF" << "\n";
+  DataFrame *df;
+  DataFrame *fromArrayDF = df->fromArray(k, kv, SZ, vals);
+  std::cout << "Printing fromArray DF orignal" << "\n";
   fromArrayDF->print();
 
   DataFrame *newDF = kv->get(k);
-  std::cout << "Printing final DF" << "\n";
+  std::cout << "Printing final newDF" << "\n";
   newDF->print();
   std::cout << "COMPLETED" << "\n";
 }
