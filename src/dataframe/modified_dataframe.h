@@ -470,42 +470,44 @@ class DataFrame : public Object {
 
 
 void KVStore::put(Key *k, DataFrame *v) {
-  // serialize
-  char* data = new char[1024];
-  data[1023] = '\0';
-  char doubleChar[256];
-  snprintf(doubleChar,sizeof(v->scm->length()), "%d", v->scm->length());
-  strcat(data, doubleChar);
-  strcat(data, "}");
-  char *colType =  new char[2];
-  colType[0] = v->scm->col_type(0);
-  strcat(data, colType);
-  strcat(data, "}");
-
-  Column* col = v->column[0];
-  for (int i = 0; i < v->scm->length(); i++) {
-    char doubleChar[256];
-    if (col->get_type() == 'I') {
-      snprintf(doubleChar,sizeof(col->as_int()->get(i)), "%d", col->as_int()->get(i));
-    } else if (col->get_type() == 'B') {
-      snprintf(doubleChar,sizeof(col->as_bool()->get(i)), "%d", col->as_bool()->get(i));
-    } else if (col->get_type() == 'F') {
-      snprintf(doubleChar,sizeof(col->as_float()->get(i)), "%f", col->as_float()->get(i));
-    } else if (col->get_type() == 'S') {
-      strcat(doubleChar, col->as_string()->get(i)->c_str());
-    }
-    strcat(data, doubleChar);
-    strcat(data, "}");
-  }
-  // store
-  Value *value = new Value(data);
-  if (k->nodeIndex == nodeIndex) {
-    store->put(k, value);
-  } else {
-    // serialize command
-    // Send the put command to the right client
-    //sendPut(k, v);
-  }
+  // // serialize
+  // char* data = new char[1024];
+  // data[1023] = '\0';
+  //
+  //
+  // char doubleChar[256];
+  // snprintf(doubleChar,sizeof(v->scm->length()), "%d", v->scm->length());
+  // strcat(data, doubleChar);
+  // strcat(data, "}");
+  // char *colType =  new char[2];
+  // colType[0] = v->scm->col_type(0);
+  // strcat(data, colType);
+  // strcat(data, "}");
+  //
+  // Column* col = v->column[0];
+  // for (int i = 0; i < v->scm->length(); i++) {
+  //   char doubleChar[256];
+  //   if (col->get_type() == 'I') {
+  //     snprintf(doubleChar,sizeof(col->as_int()->get(i)), "%d", col->as_int()->get(i));
+  //   } else if (col->get_type() == 'B') {
+  //     snprintf(doubleChar,sizeof(col->as_bool()->get(i)), "%d", col->as_bool()->get(i));
+  //   } else if (col->get_type() == 'F') {
+  //     snprintf(doubleChar,sizeof(col->as_float()->get(i)), "%f", col->as_float()->get(i));
+  //   } else if (col->get_type() == 'S') {
+  //     strcat(doubleChar, col->as_string()->get(i)->c_str());
+  //   }
+  //   strcat(data, doubleChar);
+  //   strcat(data, "}");
+  // }
+  // // store
+  // Value *value = new Value(data);
+  // if (k->nodeIndex == nodeIndex) {
+  //   store->put(k, value);
+  // } else {
+  //   // serialize command
+  //   // Send the put command to the right client
+  //   //sendPut(k, v);
+  // }
 
 }
 

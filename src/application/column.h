@@ -53,6 +53,7 @@ ColumnType infer_type(char *c) {
 class Column : public Object {
  public:
 
+
    Column() {}
 
    ~Column() {}
@@ -72,8 +73,12 @@ class Column : public Object {
   virtual void push_back(float val) {}
   virtual void push_back(String* val) {}
 
+  virtual char* serializeChunk(int idx) {}
+
  /** Returns the number of elements in the column. */
   virtual size_t size() {return 0;}
+  /** Returns the number of chunks. */
+   virtual size_t getNumChunks() {return 0;}
 
   /** Return the type of this column as a char: 'S', 'B', 'I' and 'F'. **/
   virtual char get_type() { return 'N';}
@@ -223,6 +228,26 @@ class BoolColumn : public Column {
       // std::cout << "INSIDE GET CHAR IN BOOL GET:" << values_ << " ret " << ret << "\n";
       return ret;
   }
+
+  // serializes chucks
+  virtual char* serializeChunk(int idx) {
+    if (idx >= numOfChunks_) {
+      std::cout << "Please enter a valid chunk index \n";
+      exit(1);
+    }
+    char* data = new char[1024];
+    data[1023] = '\0';
+    for (int i = 0; i < sizeOfChunk; i++) {
+      char doubleChar[256];
+      snprintf(doubleChar,sizeof(elements[idx][i]), "%d", elements[idx][i]);
+      strcat(data, doubleChar);
+      strcat(data, "}");
+    }
+    return data;
+  }
+
+  /** Returns the number of chunks. */
+   virtual size_t getNumChunks() {return numOfChunks_;}
 };
 
 
@@ -362,6 +387,27 @@ class FloatColumn : public Column {
       // std::cout << "INSIDE GET CHAR IN FLOAT GET:" << values_ << " ret " << ret << "\n";
       return ret;
   }
+
+  // serializes chucks
+  virtual char* serializeChunk(int idx) {
+    if (idx >= numOfChunks_) {
+      std::cout << "Please enter a valid chunk index \n";
+      exit(1);
+    }
+    char* data = new char[1024];
+    data[1023] = '\0';
+    for (int i = 0; i < sizeOfChunk; i++) {
+      char doubleChar[256];
+      snprintf(doubleChar,sizeof(elements[idx][i]), "%f", elements[idx][i]);
+      strcat(data, doubleChar);
+      strcat(data, "}");
+    }
+    return data;
+  }
+
+  /** Returns the number of chunks. */
+   virtual size_t getNumChunks() {return numOfChunks_;}
+
 };
 
 
@@ -451,18 +497,6 @@ class IntColumn : public Column {
   void push_back(String* val) {
     exit(1);
   }
-/*
-  void grow_() {
-    int** nElements = new int*[numOfChunks_+ 1];
-    for(size_t chunk = 0; chunk < numOfChunks_; chunk++) {
-      nElements[chunk] = elements[chunk]; // set new using pointers to old arrays of ints
-    }
-    nElements[numOfChunks_] = new int[sizeOfChunk];
-    numOfChunks_++;
-    delete[] elements;
-    elements = nElements;
-  }*/
-
 
   void grow_() {
     int** nElements = new int*[numOfChunks_*2];
@@ -520,6 +554,26 @@ class IntColumn : public Column {
       // std::cout << "INSIDE GET CHAR IN INT GET:" << values_ << " ret " << ret << "\n";
       return ret;
   }
+
+  // serializes chucks
+  virtual char* serializeChunk(int idx) {
+    if (idx >= numOfChunks_) {
+      std::cout << "Please enter a valid chunk index \n";
+      exit(1);
+    }
+    char* data = new char[1024];
+    data[1023] = '\0';
+    for (int i = 0; i < sizeOfChunk; i++) {
+      char doubleChar[256];
+      snprintf(doubleChar,sizeof(elements[idx][i]), "%d", elements[idx][i]);
+      strcat(data, doubleChar);
+      strcat(data, "}");
+    }
+    return data;
+  }
+
+  /** Returns the number of chunks. */
+   virtual size_t getNumChunks() {return numOfChunks_;}
 };
 
 
@@ -633,6 +687,25 @@ class StringColumn : public Column {
     return type_string;
   }
 
+
+  // serializes chucks
+  virtual char* serializeChunk(int idx) {
+    if (idx >= numOfChunks_) {
+      std::cout << "Please enter a valid chunk index \n";
+      exit(1);
+    }
+    char* data = new char[1024];
+    data[1023] = '\0';
+    for (int i = 0; i < sizeOfChunk; i++) {
+      char doubleChar[256];
+      strcat(doubleChar, col->as_string()->get(i)->c_str());
+      strcat(data, doubleChar);
+      strcat(data, "}");
+    }
+    return data;
+  }
+
+
   /** Set value at idx. An out of bound idx is undefined.  */
   void set(size_t idx, String *val) {
     if (idx >= count_) {
@@ -659,4 +732,7 @@ class StringColumn : public Column {
       String* values_ = get(i);
       return values_->c_str();
   }
+
+  /** Returns the number of chunks. */
+   virtual size_t getNumChunks() {return numOfChunks_;}
 };
