@@ -37,10 +37,18 @@ class Server {
     bool open;
 
   Server(char* ip) {
+    initialize();
+  }
+
+  ~Server() {
+    delete[] routes;
+    delete[] actualClientRoutes;
+  }
+
+  void initialize() {
     open = true;
-    myIP = ip;
-    std::cout << "Server IP set to " << myIP << "\n"; // Hard coded actual id this is for demo purposes
-    //initialise all client_socket[] to 0 so not checked
+    // myIP = ip;
+    myIP = "127.0.0.1";
     for (int i = 0; i < max_clients; i++) {
         client_socket[i] = 0;
     }
@@ -49,11 +57,6 @@ class Server {
 
     waitForConnections();
     informClients();
-  }
-
-  ~Server() {
-    delete[] routes;
-    delete[] actualClientRoutes;
   }
 
   int openSocket(size_t socketNum, sockaddr_in address) {
@@ -244,10 +247,16 @@ public:
   int opt = TRUE;
   int currSocket;
   int numNeighbors = 0;
+  Hashmap *store;
 
-  Client(char* ip, int port) {
+  Client(char* ip, int port, Hashmap *store_) {
+    if (store_ == nullptr) {
+      std::cout << "enter a valid hashmap pointer \n";
+      exit(1);
+    }
     myIP = ip;
     myPort = port;
+    store = store_;
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(port);
     // if(inet_pton(AF_INET, myIP, &my_addr.sin_addr) <= 0) {
@@ -282,15 +291,17 @@ public:
 
     std::cout<<"Creating threads to listen to peers.\n";
     // Creating threads to listen to peers.
-    std::thread* pool[numNeighbors];
+    /*std::thread* pool[numNeighbors];
     for (int i = 0; i < numNeighbors; i++) {
       int listenSocket = recSockets[i];
       pool[i] = new std::thread(&Client::readPeerMessages, this, listenSocket);
-    }
+    }*/
 
+    new std::thread(&Client::readPeerMessages, this);
 
     std::cout<<"Main thread done.\n";
   }
+
   ~Client() {
     delete[] sendSockets;
     delete[] recSockets;
@@ -462,13 +473,56 @@ public:
     }
   }
 
-  void readPeerMessages(int sock) {
+  void readPeerMessages() {
     while (TRUE) {
-      if((valread = read( sock , buffer, 1024) > 0)) {
-        printf("Got information from Client with socket %d: %s\n", sock, buffer);
-        memset(buffer, 0, 1025);
+      size_t selectStatus;
+      struct timeval tv;
+      fd_set fdread;
+      size_t max_sd;
+      FD_ZERO(&fdread);
+      tv.tv_sec = 1;
+      tv.tv_usec = 0;
+
+      for (int i = 0; i < numNeighbors; i++) {
+        FD_SET(recSockets[i], &fdread);
+        max_sd = (max_sd > recSockets[i]) ? max_sd : recSockets[i];
+      }
+      selectStatus = select(max_sd + 1, &fdread, NULL, NULL, &tv);
+      std::cout << "This is selectStatus: " << selectStatus << "\n";
+      if (selectStatus < 0)
+      {
+          printf("select failed\n ");
+          return exit(1);
+      } else if (selectStatus == 0) {
+          std::cout << "Nothing was read\n";
+      } else {
+        for (int k = 0; k < numNeighbors; k++) {
+          int sd = recSockets[k];
+          if (FD_ISSET(sd, &fdread)) {
+            int ret = recv(sd, (char *)buffer, sizeof(buffer), 0);
+            if(ret > 0) {
+                printf("Message received from socket %d : %s \n", sd, buffer);
+            }
+          }
+        }
       }
     }
+
+
+
+
+      // if (selectStatus == recSockets[0] || selectStatus == recSockets[1]) {
+      //   readStatus = read_UDP_socket(FD, buffer, sizeof(buffer), &readCount );
+      //   printf("Got information from Client with socket %d: %s\n", sock, buffer);
+      //   memset(buffer, 0, 1025);
+      // }
+      // if((valread = read( sock , buffer, 1024) > 0)) {
+      //   printf("Got information from Client with socket %d: %s\n", sock, buffer);
+      //   memset(buffer, 0, 1025);
+      // }
+    // } else {
+    //   std::cout << "Nothing was read\n";
+    // }
   }
 
   void terminate() {

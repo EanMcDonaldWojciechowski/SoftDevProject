@@ -698,7 +698,7 @@ class StringColumn : public Column {
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       char doubleChar[256];
-      strcat(doubleChar, col->as_string()->get(i)->c_str());
+      strcat(doubleChar, elements[idx][i]->c_str());
       strcat(data, doubleChar);
       strcat(data, "}");
     }

@@ -12,13 +12,13 @@ int main(int argh , char *argv[]) {
   }
 
   Client *c3 = new Client(ip, 8813);
-  sleep(3); // 2 -> 1
+  // sleep(3); // 2 -> 1
   c3->sendMessage(8811, "Hello 1 from 3, nice to meet you."); // 2 --> 1
-  sleep(3); // 3 -> 1
-  sleep(3); // 1 -> 2
-  sleep(3); // 1 -> 3
+  // sleep(3); // 3 -> 1
+  // sleep(3); // 1 -> 2
+  // sleep(3); // 1 -> 3
   c3->sendMessage(8812, "Hello 2 from 3, nice to meet you."); // 3 --> 2
-  sleep(3); // 2 -> 3
-  c3->terminate();
-  return 0;
+  // sleep(3); // 2 -> 3
+  // c3->terminate();
+  return 1;
 }

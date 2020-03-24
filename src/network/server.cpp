@@ -12,7 +12,7 @@ int main(int argh , char *argv[]) {
   }
 
   Server *s = new Server(ip);
-  sleep(18);
-  s->terminate();
-  return 0;
+  // sleep(18);
+  // s->terminate();
+  return 1;
 }
