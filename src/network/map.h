@@ -63,6 +63,39 @@ class Value : public Object {
      delete[] value;
    }
 
+   char* dataToSend(Key* key) {
+     // std::cout << "value before: " << value << "\n";
+     char* data = new char[1024];
+     data[1023] = '\0';
+     char doubleChar[256];
+     strcat(data, "PUT}");
+     // std::cout << "this is key: " << key->key << "\n";
+     strcat(data, key->key);
+     strcat(data, "}");
+     strcat(data, value);
+     // std::cout << "value after: " << data << "\n";
+     return data;
+   }
+
+   char* dataToRetrieve(Key* key, size_t chunkNum) {
+     // std::cout << "value before: " << value << "\n";
+     char* data = new char[1024];
+     data[1023] = '\0';
+     strcat(data, "GET}");
+     // std::cout << "this is key: " << key->key << "\n";
+     strcat(data, key->key);
+     strcat(data, "_");
+     char doubleChar[256];
+     snprintf(doubleChar,sizeof(key->nodeIndex), "%d", key->nodeIndex);
+     strcat(data, doubleChar);
+     strcat(data, "_");
+     char iIdxChar[256];
+     snprintf(iIdxChar,sizeof(chunkNum), "%d", chunkNum);
+     strcat(data, iIdxChar);
+     strcat(data, "}");
+     // std::cout << "value after: " << data << "\n";
+     return data;
+   }
 
 };
 
@@ -144,6 +177,20 @@ class Hashmap : public Object {
             hashKey = (hashKey + 1) % capacity_;
           }
           return data[hashKey]->val_;
+        }
+
+        // Returns true if the key exists, otherwise false
+        bool keyExists(Object* key) {
+          size_t hashKey = (key->hash() % capacity_);
+          size_t iteration = 0;
+          while(!data[hashKey]->key_->equals(key)) {
+            hashKey = (hashKey + 1) % capacity_;
+            iteration += 1;
+            if (iteration == capacity_ - 1) {
+              return 0;
+            }
+          }
+          return 1;
         }
 
         // Associates the specified value with the specified key in this map.

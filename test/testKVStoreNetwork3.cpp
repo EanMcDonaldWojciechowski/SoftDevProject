@@ -3,7 +3,7 @@
 #include "../src/dataframe/modified_dataframe.h"
 
 int main(int argc, char** argv) {
-  size_t nodeIndex = 0;
+  size_t nodeIndex = 2;
   size_t SZ = 10*10;
   Column *vals = new IntColumn();
   for (size_t i = 0; i < SZ; i++) {
@@ -18,9 +18,8 @@ int main(int argc, char** argv) {
 
   KVStore *kv = new KVStore(nodeIndex);
   Key *k = new Key("main", 0);
-  sleep(2);
-  // kv->put(k, df);
-  DataFrame *newDF = kv->get(k);
+  kv->put(k, df);
+  //DataFrame *newDF = kv->get(k);
   //std::cout << "Printing final DF" << "\n";
   //newDF->print();
   sleep(10);

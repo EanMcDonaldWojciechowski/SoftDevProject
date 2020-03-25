@@ -37,7 +37,7 @@ class Server {
     bool open;
 
   Server(char* ip) {
-    initialize();
+    // initialize();
   }
 
   ~Server() {
@@ -313,19 +313,19 @@ public:
 
   void sendMessage(int sendTo, const char* msg) {
     std::cout<<"Sending message now.\n";
-    char* header = new char[3];
+    // char* header = new char[3];
     // strcpy(header, "S:myPort D:sendTo M:msg");
-    strcpy(header, "S:");
-    char myPortChar[5];
-    sprintf(myPortChar, "%d", myPort);
-    strcat(header, myPortChar);
-    strcat(header, " D:");
+    // strcpy(header, "S:");
+    // char myPortChar[5];
+    // sprintf(myPortChar, "%d", myPort);
+    // strcat(header, myPortChar);
+    // strcat(header, " D:");
     // strcat(header, sendTo);
-    char clientPortChar[5];
-    sprintf(clientPortChar, "%d", sendTo);
-    strcat(header, clientPortChar);
-    strcat(header, " M:");
-    strcat(header, msg);
+    // char clientPortChar[5];
+    // sprintf(clientPortChar, "%d", sendTo);
+    // strcat(header, clientPortChar);
+    // strcat(header, " M:");
+    // strcat(header, msg);
 
     // figure out which socket to use
     int clientSock;
@@ -336,8 +336,9 @@ public:
     }
 
 
-    send(clientSock , header , strlen(header) , 0);
-    std::cout << "Sending message to socket " << clientSock << " :" << header << "\n";
+    // send(clientSock , header , strlen(header) , 0);
+    send(clientSock , msg , strlen(msg) , 0);
+    std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
   }
 
   void connectToServer() {
@@ -454,6 +455,7 @@ public:
 
 
   void connectToPeers() {
+    sleep(1);
     for (int i = 0; i < numNeighbors; i++) {
       struct sockaddr_in peer_addr = neighborRoutes[i];
       int peerSock;
@@ -502,6 +504,7 @@ public:
             int ret = recv(sd, (char *)buffer, sizeof(buffer), 0);
             if(ret > 0) {
                 printf("Message received from socket %d : %s \n", sd, buffer);
+                receivedMessage(buffer, sd);
             }
           }
         }
@@ -523,6 +526,71 @@ public:
     // } else {
     //   std::cout << "Nothing was read\n";
     // }
+  }
+
+  void receivedMessage(char* message, int sd) {
+    char* msgType = new char[4];
+    msgType[3] = '\0';
+
+    for (int i = 0; i < 3; i++) {
+        msgType[i] = message[i];
+    }
+
+    if (strcmp(msgType, "PUT") == 0) {
+      storeLocal(message);
+    } else if (strcmp(msgType, "GET") == 0) {
+      retrieveLocal(message, sd);
+    }
+  }
+
+  void storeLocal(char* message) {
+    int i;
+    Key *k;
+    Value *v;
+    char* keyChar = new char[256];
+    for (i = 4; i < strlen(message); i++) {
+      if (message[i] == '}') {
+          k = new Key(keyChar, myPort - 8810);
+          break;
+      }
+      char theval[2] = {0};
+      theval[0] = message[i];
+      strcat(keyChar, theval);
+    }
+    char val[1024];
+    memcpy(val, &message[i + 1], (strlen(message) - i + 1));
+    val[strlen(message) - i + 1] = '\0';
+    v = new Value(val);
+    std::cout<<"I will store value " << val << " in key " << keyChar << "\n";
+    store->put(k, v);
+
+    std::cout << "attempting to print key k's value: " <<  dynamic_cast<Value*>(store->get(k))->value << "\n";
+  }
+
+  void retrieveLocal(char* message, int sd) {
+    char* keyChar = new char[256];
+    Key *k;
+    for (int i = 4; i < strlen(message); i++) {
+      if (message[i] == '}') {
+          k = new Key(keyChar, myPort - 8810);
+          break;
+      }
+      char theval[2] = {0};
+      theval[0] = message[i];
+      strcat(keyChar, theval);
+    }
+    char *keyVal = new char[4];
+    strcat(keyVal, "RSP");
+
+    Value *v = dynamic_cast<Value*>(store->get(k));
+
+    Key *tempKey = new Key(keyVal, myPort - 8810);
+    char* returnMsg = v->dataToSend(tempKey);
+    strcat(returnMsg, v->value);
+
+    send(sd , returnMsg , strlen(returnMsg) , 0);
+    std::cout << "Sending message to socket " << sd << " :" << returnMsg << "\n";
+
   }
 
   void terminate() {

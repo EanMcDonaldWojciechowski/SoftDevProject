@@ -16,15 +16,19 @@ public:
     nodeIndex = nodeIndex_;
     if (nodeIndex == 0) {
       // TODO: Create thread to create the server
-      // Server *server = new Server("127.0.0.1");
-      new std::thread(&Server::initialize, this);
-      sleep(1);
+      std::cout << "creating server \n";
+      Server *server = new Server("127.0.0.1");
+      std::cout << "creating server thread \n";
+      std::thread *t1 = new std::thread(&Server::initialize, server);
+      // t1->join();
+      // sleep(1);
+      std::cout << "creating client on server machine \n";
       client = new Client("127.0.0.2", basePort + nodeIndex, store);
     } else if (nodeIndex == 1) {
-      sleep(2);
+      // sleep(2);
       client = new Client("127.0.0.3", basePort + nodeIndex, store);
     } else if (nodeIndex == 2) {
-      sleep(2);
+      // sleep(2);
       client = new Client("127.0.0.4", basePort + nodeIndex, store);
     }
    }
@@ -35,14 +39,17 @@ public:
 
   void put(Key *k, DataFrame *v);
 
-  void sendInfo(Key *chunkKey, char* val) {
+  DataFrame* get(Key *k);
+
+  void sendInfo(Key *chunkKey, Value *val) {
     if (chunkKey->nodeIndex == nodeIndex) {
       store->put(chunkKey, val);
     } else {
-      client->sendMessage(basePort + chunkKey->nodeIndex, val);
+      client->sendMessage(basePort + chunkKey->nodeIndex, val->dataToSend(chunkKey));
     }
 
   }
+
 
   // TODO: add method to add values from an incoming client message
   // Add ChunkStore in Client constructor

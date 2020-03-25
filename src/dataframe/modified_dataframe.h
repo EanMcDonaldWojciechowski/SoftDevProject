@@ -476,94 +476,99 @@ void KVStore::put(Key *k, DataFrame *v) {
 }
 
 
-// DataFrame* KVStore::get(Key *k) {
-//   if (k->nodeIndex == nodeIndex) {
-//     Value *gotValue = dynamic_cast<Value*>(store->get(k));
-//     size_t col_len = 0;
-//     char col_type = '\0';
-//     Column *c;
-//     size_t num;
-//     float numFloat;
-//
-//     int charSize = strlen(gotValue->value);
-//     char* currField = new char[256];
-//     currField[255] = '\0';
-//     int setFieldNum = 0;
-//     for (int i = 0; i < charSize; i++) {
-//       if (gotValue->value[i] == '}' && setFieldNum == 0) {
-//         char* pEnd;
-//         col_len = strtod(currField, &pEnd);
-//         setFieldNum++;
-//         memset(currField, 0, strlen(currField));
-//         // std::cout<<"Column len is: "<< col_len << "\n";
-//         continue;
-//       } else if (gotValue->value[i] == '}' && setFieldNum == 1) {
-//         col_type = currField[0];
-//         if (col_type == 'I') {
-//           c = new IntColumn();
-//         } else if (col_type == 'B') {
-//           c = new BoolColumn();
-//         } else if (col_type == 'F') {
-//           c = new FloatColumn();
-//         } else if (col_type == 'S') {
-//           c = new StringColumn();
-//         }
-//         setFieldNum++;
-//         memset(currField, 0, strlen(currField));
-//         continue;
-//       } else if (gotValue->value[i] == '}' && setFieldNum > 1) {
-//         // std::cout<<"Adding currField to Column: "<< currField << "\n";
-//           if (col_type == 'I') {
-//             char* pEnd;
-//             num = strtol(currField, &pEnd, 10);
-//             c->as_int()->push_back((int)num);
-//             // std::cout << c->size() << "\n";
-//           } else if (col_type == 'B') {
-//             char* pEnd;
-//             num = strtol(currField, &pEnd, 10);
-//             c->as_bool()->push_back((bool)num);
-//           } else if (col_type == 'F') {
-//             char* pEnd;
-//             numFloat = strtod(currField, &pEnd);
-//             c->as_float()->push_back((float)numFloat);
-//           } else if (col_type == 'S') {
-//             c = new StringColumn();
-//             String *str = new String(currField);
-//             c->as_string()->push_back(str);
-//           }
-//           setFieldNum++;
-//           memset(currField, 0, strlen(currField));
-//           continue;
-//       }
-//       char theval[2] = {0};
-//       theval[0] = gotValue->value[i];
-//       strcat(currField, theval);
-//       // std::cout<<"Current value of currField: "<< currField << "\n";
-//     }
-//
-//     Schema *s = new Schema();
-//     DataFrame *ret = new DataFrame(*s);
-//     // std::cout << c->size() << "\n";
-//     ret->add_column(c);
-//     return ret;
-//
-//   } else {
-//     // serialize command
-//     // Send the get command to the right client
-//     //get(k);
-//     // deserialize
-//   }
-//
-//   return nullptr;
-// }
+DataFrame* KVStore::get(Key *k) {
+  return store->get(k);
+  // if (k->nodeIndex == nodeIndex) {
+  //   Value *gotValue = dynamic_cast<Value*>(store->get(k));
+  //   size_t col_len = 0;
+  //   char col_type = '\0';
+  //   Column *c;
+  //   size_t num;
+  //   float numFloat;
+  //
+  //   int charSize = strlen(gotValue->value);
+  //   char* currField = new char[256];
+  //   currField[255] = '\0';
+  //   int setFieldNum = 0;
+  //   for (int i = 0; i < charSize; i++) {
+  //     if (gotValue->value[i] == '}' && setFieldNum == 0) {
+  //       char* pEnd;
+  //       col_len = strtod(currField, &pEnd);
+  //       setFieldNum++;
+  //       memset(currField, 0, strlen(currField));
+  //       // std::cout<<"Column len is: "<< col_len << "\n";
+  //       continue;
+  //     } else if (gotValue->value[i] == '}' && setFieldNum == 1) {
+  //       col_type = currField[0];
+  //       if (col_type == 'I') {
+  //         c = new IntColumn();
+  //       } else if (col_type == 'B') {
+  //         c = new BoolColumn();
+  //       } else if (col_type == 'F') {
+  //         c = new FloatColumn();
+  //       } else if (col_type == 'S') {
+  //         c = new StringColumn();
+  //       }
+  //       setFieldNum++;
+  //       memset(currField, 0, strlen(currField));
+  //       continue;
+  //     } else if (gotValue->value[i] == '}' && setFieldNum > 1) {
+  //       // std::cout<<"Adding currField to Column: "<< currField << "\n";
+  //         if (col_type == 'I') {
+  //           char* pEnd;
+  //           num = strtol(currField, &pEnd, 10);
+  //           c->as_int()->push_back((int)num);
+  //           // std::cout << c->size() << "\n";
+  //         } else if (col_type == 'B') {
+  //           char* pEnd;
+  //           num = strtol(currField, &pEnd, 10);
+  //           c->as_bool()->push_back((bool)num);
+  //         } else if (col_type == 'F') {
+  //           char* pEnd;
+  //           numFloat = strtod(currField, &pEnd);
+  //           c->as_float()->push_back((float)numFloat);
+  //         } else if (col_type == 'S') {
+  //           c = new StringColumn();
+  //           String *str = new String(currField);
+  //           c->as_string()->push_back(str);
+  //         }
+  //         setFieldNum++;
+  //         memset(currField, 0, strlen(currField));
+  //         continue;
+  //     }
+  //     char theval[2] = {0};
+  //     theval[0] = gotValue->value[i];
+  //     strcat(currField, theval);
+  //     // std::cout<<"Current value of currField: "<< currField << "\n";
+  //   }
+  //
+  //   Schema *s = new Schema();
+  //   DataFrame *ret = new DataFrame(*s);
+  //   // std::cout << c->size() << "\n";
+  //   ret->add_column(c);
+  //   return ret;
+  //
+  // } else {
+  //   // serialize command
+  //   // Send the get command to the right client
+  //   //get(k);
+  //   // deserialize
+  // }
+  //
+  // return nullptr;
+}
 
 
 void ChunkStore::put(Key *k, DataFrame *v) {
-  Column* col = v->column[0];
+    Column* col = v->column[0];
   // serialize
   // add meta data for frist chunk
   char* data = new char[1024];
   data[1023] = '\0';
+  char chunkNum[256];
+  snprintf(chunkNum,sizeof(col->getNumChunks()), "%d", col->getNumChunks());
+  strcat(data, chunkNum);
+  strcat(data, "}");
   char doubleChar[256];
   snprintf(doubleChar,sizeof(v->scm->length()), "%d", v->scm->length());
   strcat(data, doubleChar);
@@ -577,6 +582,8 @@ void ChunkStore::put(Key *k, DataFrame *v) {
   for (int i = 0; i < col->getNumChunks(); i++) {
     int storeClientLocation = i % 3; // TODO: change this 3 later to how many clients we have
     char* chunkStoreKey = new char[1024];
+    memset(chunkStoreKey, 0, 1025);
+    // std::cout<<"in df->chunkstore->put value of chunkStoreKey BEFORE: " << chunkStoreKey << "\n";
     strcat(chunkStoreKey, k->key);
     strcat(chunkStoreKey, "_");
     char nodeIdxChar[256];
@@ -587,6 +594,7 @@ void ChunkStore::put(Key *k, DataFrame *v) {
     snprintf(iIdxChar,sizeof(i), "%d", i);
     strcat(chunkStoreKey, iIdxChar);
 
+    // std::cout<<"in df->chunkstore->put value of chunkStoreKey: " << chunkStoreKey << "\n";
     Key *chunkKey = new Key(chunkStoreKey, storeClientLocation);
 
     if (col->get_type() == 'I') {
@@ -601,9 +609,39 @@ void ChunkStore::put(Key *k, DataFrame *v) {
     // add meta data if fist chunk
     if (i == 0) {
       strcat(data, val);
-      sendInfo(chunkKey, data);
+      Value *dataVal = new Value(data);
+      sendInfo(chunkKey, dataVal);
     } else {
-      sendInfo(chunkKey, val);
+      Value *dataVal = new Value(val);
+      sendInfo(chunkKey, dataVal);
     }
+
   }
+}
+
+DataFrame* ChunkStore::get(Key *k) {
+  // get metadata from first chunk
+  Value *firstChunk;
+  if (nodeIndex == 0) {
+    firstChunk = dynamic_cast<Value*>(store->get(k));
+  } else {
+    client->sendMessage(basePort + k->nodeIndex, firstChunk->dataToRetrieve(k, 0));
+    std::cout<<"Wait for key to be populated...\n";
+    while (!store->keyExists(k)) {
+      sleep(0.5);
+      std::cout << "... \n";
+    }
+    std::cout << "key has arrived \n";
+    char *keyVal = new char[4];
+    strcat(keyVal, "RSP");
+    Key *gotKey = new Key(keyVal, nodeIndex);
+    firstChunk = dynamic_cast<Value*>(store->get(gotKey));
+  }
+
+  // size_t chunkSize;
+  // size_t colLen;
+  // char colType;
+  std::cout << "first chunk value " << firstChunk->value << "\n";
+
+  return nullptr;
 }
