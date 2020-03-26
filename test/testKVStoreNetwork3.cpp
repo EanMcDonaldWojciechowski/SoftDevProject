@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv) {
   size_t nodeIndex = 2;
-  size_t SZ = 10*10;
+  size_t SZ = 10*8;
   Column *vals = new IntColumn();
   for (size_t i = 0; i < SZ; i++) {
     vals->push_back((int)i);
@@ -22,6 +22,6 @@ int main(int argc, char** argv) {
   //DataFrame *newDF = kv->get(k);
   //std::cout << "Printing final DF" << "\n";
   //newDF->print();
-  sleep(10);
+  sleep(15);
   std::cout << "COMPLETED" << "\n";
 }

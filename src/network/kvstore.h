@@ -41,6 +41,8 @@ public:
 
   DataFrame* get(Key *k);
 
+  void waitForKey(Key* k);
+
   void sendInfo(Key *chunkKey, Value *val) {
     if (chunkKey->nodeIndex == nodeIndex) {
       store->put(chunkKey, val);

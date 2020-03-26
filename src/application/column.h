@@ -74,11 +74,15 @@ class Column : public Object {
   virtual void push_back(String* val) {}
 
   virtual char* serializeChunk(int idx) {}
+  virtual void printCol() {}
 
  /** Returns the number of elements in the column. */
   virtual size_t size() {return 0;}
   /** Returns the number of chunks. */
-   virtual size_t getNumChunks() {return 0;}
+  virtual size_t getNumChunks() {return 0;}
+
+  // append chunk serialized data onto column
+  virtual void deserializeChunk(char* data) {}
 
   /** Return the type of this column as a char: 'S', 'B', 'I' and 'F'. **/
   virtual char get_type() { return 'N';}
@@ -238,6 +242,9 @@ class BoolColumn : public Column {
     char* data = new char[1024];
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
+      if (idx * sizeOfChunk + i == count_) {
+        break;
+      }
       char doubleChar[256];
       snprintf(doubleChar,sizeof(elements[idx][i]), "%d", elements[idx][i]);
       strcat(data, doubleChar);
@@ -246,8 +253,32 @@ class BoolColumn : public Column {
     return data;
   }
 
+  // deserialize chunk data
+  virtual void deserializeChunk(char* data) {
+    char* keyChar = new char[256];
+    bool val;
+    for (int i = 0; i < strlen(data); i++) {
+      if (data[i] == '}') {
+        char* pEnd;
+        val = strtol(keyChar, &pEnd, 10);
+        push_back(val);
+        memset(keyChar, 0, 256);
+      }
+      char theval[2] = {0};
+      theval[0] = data[i];
+      strcat(keyChar, theval);
+    }
+  }
+
   /** Returns the number of chunks. */
    virtual size_t getNumChunks() {return numOfChunks_;}
+
+   // Prints columns
+   virtual void printCol() {
+     for (int i = 0; i < count_; i++) {
+       std::cout << "For i " << i << " = " << get(i) << "\n";
+     }
+   }
 };
 
 
@@ -397,6 +428,9 @@ class FloatColumn : public Column {
     char* data = new char[1024];
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
+      if (idx * sizeOfChunk + i == count_) {
+        break;
+      }
       char doubleChar[256];
       snprintf(doubleChar,sizeof(elements[idx][i]), "%f", elements[idx][i]);
       strcat(data, doubleChar);
@@ -405,8 +439,33 @@ class FloatColumn : public Column {
     return data;
   }
 
+  // deserialize chunk data
+  virtual void deserializeChunk(char* data) {
+    char* keyChar = new char[256];
+    float val;
+    for (int i = 0; i < strlen(data); i++) {
+
+      if (data[i] == '}') {
+        char* pEnd;
+        val = strtod(keyChar, &pEnd);
+        push_back(val);
+        memset(keyChar, 0, 256);
+      }
+      char theval[2] = {0};
+      theval[0] = data[i];
+      strcat(keyChar, theval);
+    }
+  }
+
   /** Returns the number of chunks. */
    virtual size_t getNumChunks() {return numOfChunks_;}
+
+   // Prints columns
+   virtual void printCol() {
+     for (int i = 0; i < count_; i++) {
+       std::cout << "For i " << i << " = " << get(i) << "\n";
+     }
+   }
 
 };
 
@@ -564,6 +623,9 @@ class IntColumn : public Column {
     char* data = new char[1024];
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
+      if (idx * sizeOfChunk + i == count_) {
+        break;
+      }
       char doubleChar[256];
       snprintf(doubleChar,sizeof(elements[idx][i]), "%d", elements[idx][i]);
       strcat(data, doubleChar);
@@ -572,8 +634,34 @@ class IntColumn : public Column {
     return data;
   }
 
+  // deserialize chunk data
+  virtual void deserializeChunk(char* data) {
+    char* keyChar = new char[256];
+    int val;
+    for (int i = 0; i < strlen(data); i++) {
+      if (data[i] == '}') {
+        char* pEnd;
+        val = strtol(keyChar, &pEnd, 10);
+        push_back(val);
+        memset(keyChar, 0, 256);
+        continue;
+      }
+      char theval[2] = {0};
+      theval[0] = data[i];
+      strcat(keyChar, theval);
+    }
+  }
+
   /** Returns the number of chunks. */
    virtual size_t getNumChunks() {return numOfChunks_;}
+
+   // Prints columns
+   virtual void printCol() {
+     std::cout << "The count for this column is " << count_ << "\n";
+     for (int i = 0; i < count_; i++) {
+       std::cout << "For i " << i << " = " << get(i) << "\n";
+     }
+   }
 };
 
 
@@ -697,12 +785,31 @@ class StringColumn : public Column {
     char* data = new char[1024];
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
+      if (idx * sizeOfChunk + i == count_) {
+        break;
+      }
       char doubleChar[256];
       strcat(doubleChar, elements[idx][i]->c_str());
       strcat(data, doubleChar);
       strcat(data, "}");
     }
     return data;
+  }
+
+  // deserialize chunk data
+  virtual void deserializeChunk(char* data) {
+    char* keyChar = new char[256];
+    String* val;
+    for (int i = 0; i < strlen(data); i++) {
+      if (data[i] == '}') {
+        val = new String(keyChar);
+        push_back(val);
+        memset(keyChar, 0, 256);
+      }
+      char theval[2] = {0};
+      theval[0] = data[i];
+      strcat(keyChar, theval);
+    }
   }
 
 
@@ -735,4 +842,11 @@ class StringColumn : public Column {
 
   /** Returns the number of chunks. */
    virtual size_t getNumChunks() {return numOfChunks_;}
+
+   // Prints columns
+   virtual void printCol() {
+     for (int i = 0; i < count_; i++) {
+       std::cout << "For i " << i << " = " << get(i)->c_str() << "\n";
+     }
+   }
 };

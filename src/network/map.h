@@ -183,14 +183,18 @@ class Hashmap : public Object {
         bool keyExists(Object* key) {
           size_t hashKey = (key->hash() % capacity_);
           size_t iteration = 0;
-          while(!data[hashKey]->key_->equals(key)) {
-            hashKey = (hashKey + 1) % capacity_;
-            iteration += 1;
-            if (iteration == capacity_ - 1) {
-              return 0;
+          printall();
+
+          for (int i = 0; i < capacity_; i++) {
+            if (data[hashKey] == nullptr) {
+              continue;
             }
+            if (data[hashKey]->key_->equals(key)) {
+              return 1;
+            }
+            hashKey = (hashKey + 1) % capacity_;
           }
-          return 1;
+          return 0;
         }
 
         // Associates the specified value with the specified key in this map.
@@ -233,18 +237,18 @@ class Hashmap : public Object {
           }
         };
 
-        // void printall() {
-        //   for (size_t i = 0; i < capacity_; i++) {
-        //     if (data[i] == nullptr) {
-        //       std::cout << i << ": null \n";
-        //     }
-        //     else {
-        //       String *castedO = dynamic_cast<String*>(data[i]->key_);
-        //       std::cout << i << ": " << castedO->getStrValue() << "\n";
-        //     }
-        //   }
-        //   std::cout << "\n";
-        // }
+        void printall() {
+          for (size_t i = 0; i < capacity_; i++) {
+            if (data[i] == nullptr) {
+              std::cout << i << ": null \n";
+            }
+            else {
+              Key *castedO = dynamic_cast<Key*>(data[i]->key_);
+              std::cout << i << ": " << castedO->key << "\n";
+            }
+          }
+          std::cout << "\n";
+        }
 
         // Removes the mapping for the specified key from this map if present.
         void remove(Object *key) {

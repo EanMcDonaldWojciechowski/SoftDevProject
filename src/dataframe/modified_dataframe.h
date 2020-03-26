@@ -477,6 +477,7 @@ void KVStore::put(Key *k, DataFrame *v) {
 
 
 DataFrame* KVStore::get(Key *k) {
+  std::cout << "inside kvstore get \n";
   return store->get(k);
   // if (k->nodeIndex == nodeIndex) {
   //   Value *gotValue = dynamic_cast<Value*>(store->get(k));
@@ -560,7 +561,8 @@ DataFrame* KVStore::get(Key *k) {
 
 
 void ChunkStore::put(Key *k, DataFrame *v) {
-    Column* col = v->column[0];
+  std::cout << "inside chunkstore get \n";
+  Column* col = v->column[0];
   // serialize
   // add meta data for frist chunk
   char* data = new char[1024];
@@ -587,7 +589,7 @@ void ChunkStore::put(Key *k, DataFrame *v) {
     strcat(chunkStoreKey, k->key);
     strcat(chunkStoreKey, "_");
     char nodeIdxChar[256];
-    snprintf(nodeIdxChar,sizeof(i), "%d", k->nodeIndex);
+    snprintf(nodeIdxChar,sizeof(k->nodeIndex), "%d", k->nodeIndex);
     strcat(chunkStoreKey, nodeIdxChar);
     strcat(chunkStoreKey, "_");
     char iIdxChar[256];
@@ -622,26 +624,110 @@ void ChunkStore::put(Key *k, DataFrame *v) {
 DataFrame* ChunkStore::get(Key *k) {
   // get metadata from first chunk
   Value *firstChunk;
+  char* chunkStoreKey = new char[1024];
+  memset(chunkStoreKey, 0, 1025);
+  strcat(chunkStoreKey, k->key);
+  strcat(chunkStoreKey, "_");
+  char nodeIdxChar[256];
+  snprintf(nodeIdxChar,sizeof(k->nodeIndex), "%d", k->nodeIndex);
+  strcat(chunkStoreKey, nodeIdxChar);
+  strcat(chunkStoreKey, "_0");
+
+  Key *firstChunkKey = new Key(chunkStoreKey, 0);
+
   if (nodeIndex == 0) {
-    firstChunk = dynamic_cast<Value*>(store->get(k));
-  } else {
-    client->sendMessage(basePort + k->nodeIndex, firstChunk->dataToRetrieve(k, 0));
     std::cout<<"Wait for key to be populated...\n";
-    while (!store->keyExists(k)) {
-      sleep(0.5);
-      std::cout << "... \n";
-    }
+    waitForKey(firstChunkKey);
     std::cout << "key has arrived \n";
+    firstChunk = dynamic_cast<Value*>(store->get(firstChunkKey));
+  } else {
+    // std::cout<<"About to Wait for key to be populated for key " << firstChunkKey->key << "\n";
+    char* data = new char[1024];
+    strcat(data, "GET}");
+    strcat(data, firstChunkKey->key);
+    strcat(data, "}");
+    client->sendMessage(basePort + 0, data);
+    // std::cout<<"Wait for key to be populated for key " << firstChunkKey->key << "\n";
+
+
     char *keyVal = new char[4];
+    memset(keyVal, 0, 4);
     strcat(keyVal, "RSP");
     Key *gotKey = new Key(keyVal, nodeIndex);
+    waitForKey(gotKey);
+    std::cout << "key has arrived \n";
     firstChunk = dynamic_cast<Value*>(store->get(gotKey));
+    store->remove(gotKey);
   }
 
-  // size_t chunkSize;
-  // size_t colLen;
-  // char colType;
+  size_t numChunks;
+  size_t colLen;
+  char colType;
   std::cout << "first chunk value " << firstChunk->value << "\n";
+  char* keyChar = new char[256];
+  size_t fieldNum = 0;
+  int i;
+  for (i = 0; i < strlen(firstChunk->value); i++) {
+    if (firstChunk->value[i] == '}') {
+      if (fieldNum == 0) {
+        char* pEnd;
+        numChunks = strtol(keyChar, &pEnd, 10);
+        fieldNum += 1;
+        memset(keyChar, 0, 256);
+      } else if (fieldNum == 1) {
+        char* pEnd;
+        colLen = strtol(keyChar, &pEnd, 10);
+        fieldNum += 1;
+        memset(keyChar, 0, 256);
+      } else if (fieldNum == 2) {
+        colType = keyChar[0];
+        memset(keyChar, 0, 256);
+        break;
+      }
+      continue;
+    }
+    char theval[2] = {0};
+    theval[0] = firstChunk->value[i];
+    strcat(keyChar, theval);
+  }
+
+  char *val = new char[1024];
+  memcpy(val, &firstChunk->value[i + 1], (strlen(firstChunk->value) - i + 1));
+  std::cout<<"This is val to deserialize in firstChunk: " << val << "\n";
+  std::cout<<"Metadata for firstChunk numChunks: " << numChunks << "\n";
+  std::cout<<"Metadata for colLen colType: " << colLen << "\n";
+  std::cout<<"Metadata for firstChunk colType: " << colType << "\n";
+
+  Column *col;
+  if (colType == 'I') {
+    col = new IntColumn();
+    col->as_int()->deserializeChunk(val);
+    std::cout<<"Calling printcol...\n";
+    col->as_int()->printCol();
+  } else if (colType == 'B') {
+    col = new BoolColumn();
+  } else if (colType == 'F') {
+    col = new FloatColumn();
+  } else if (colType == 'S') {
+    col = new StringColumn();
+  }
+
+  // char *val = new char[1024];
+  // memcpy(val, &firstChunk->value[i + 1], (strlen(firstChunk->value) - i + 1));
+  // std::cout<<"This is val to deserialize in firstChunk: " << val << "\n";
+  // col->deserializeChunk(val);
+
+  // for (int j = 1; j < numChunks; j++) {
+  //
+  // }
+
 
   return nullptr;
+}
+
+void ChunkStore::waitForKey(Key* k) {
+  while (!store->keyExists(k)) {
+    sleep(1);
+    std::cout << "... \n";
+  }
 }

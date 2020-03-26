@@ -568,6 +568,19 @@ public:
   }
 
   void retrieveLocal(char* message, int sd) {
+    //debugging
+    std::cout << "TRYING TO SEND TO SOCKET: " << sd << "\n";
+    size_t sendToPort;
+    for (int i = 0; i < numNeighbors; i++) {
+      std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
+      std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
+      std::cout << "recSockets[i]: " << recSockets[i] << "\n";
+      if (recSockets[i] == sd) {
+        sendToPort = ntohs(neighborRoutes[i].sin_port);
+      }
+    }
+
+
     char* keyChar = new char[256];
     Key *k;
     for (int i = 4; i < strlen(message); i++) {
@@ -586,10 +599,13 @@ public:
 
     Key *tempKey = new Key(keyVal, myPort - 8810);
     char* returnMsg = v->dataToSend(tempKey);
-    strcat(returnMsg, v->value);
+    // strcat(returnMsg, v->value);
 
-    send(sd , returnMsg , strlen(returnMsg) , 0);
-    std::cout << "Sending message to socket " << sd << " :" << returnMsg << "\n";
+    // sleep(2);
+
+    // send(sd , returnMsg, strlen(returnMsg), 0);
+    sendMessage(sendToPort, returnMsg);
+    std::cout << "Sending message to socket " << sd << ": " << returnMsg << "\n";
 
   }
 
