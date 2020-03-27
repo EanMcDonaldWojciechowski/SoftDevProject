@@ -246,7 +246,8 @@ class BoolColumn : public Column {
         break;
       }
       char doubleChar[256];
-      snprintf(doubleChar,sizeof(elements[idx][i]), "%d", elements[idx][i]);
+      snprintf(doubleChar,sizeof((int)elements[idx][i]), "%d", (int)elements[idx][i]);
+      // std::cout<<"Actual Bool at position " << elements[idx][i] << " but we got " << doubleChar << "\n";
       strcat(data, doubleChar);
       strcat(data, "}");
     }
@@ -261,8 +262,10 @@ class BoolColumn : public Column {
       if (data[i] == '}') {
         char* pEnd;
         val = strtol(keyChar, &pEnd, 10);
+        // std::cout<<"Actual Bool at position " << keyChar << " but we got " << val << "\n";
         push_back(val);
         memset(keyChar, 0, 256);
+        continue;
       }
       char theval[2] = {0};
       theval[0] = data[i];
@@ -432,7 +435,8 @@ class FloatColumn : public Column {
         break;
       }
       char doubleChar[256];
-      snprintf(doubleChar,sizeof(elements[idx][i]), "%f", elements[idx][i]);
+      snprintf(doubleChar,8, "%f", elements[idx][i]);
+      // std::cout<<"Actual float at position " << elements[idx][i] << " but we got " << doubleChar << "\n";
       strcat(data, doubleChar);
       strcat(data, "}");
     }
@@ -450,6 +454,7 @@ class FloatColumn : public Column {
         val = strtod(keyChar, &pEnd);
         push_back(val);
         memset(keyChar, 0, 256);
+        continue;
       }
       char theval[2] = {0};
       theval[0] = data[i];
@@ -785,12 +790,14 @@ class StringColumn : public Column {
     char* data = new char[1024];
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
-      if (idx * sizeOfChunk + i == count_) {
+      if (idx * sizeOfChunk + i >= count_) {
         break;
       }
-      char doubleChar[256];
-      strcat(doubleChar, elements[idx][i]->c_str());
-      strcat(data, doubleChar);
+      // char doubleChar[256];
+      // strcat(doubleChar, elements[idx][i]->c_str());
+      // std::cout<<"Actual str at position " << elements[idx][i]->c_str() << "\n";
+      // std::cout<<"WE ARE SERIALIZING I " << idx * sizeOfChunk + i << " with count_ " << count_ << "\n";
+      strcat(data, elements[idx][i]->c_str());
       strcat(data, "}");
     }
     return data;
@@ -805,6 +812,7 @@ class StringColumn : public Column {
         val = new String(keyChar);
         push_back(val);
         memset(keyChar, 0, 256);
+        continue;
       }
       char theval[2] = {0};
       theval[0] = data[i];

@@ -126,7 +126,7 @@ class Server {
          nPort = strtol(charPort, &pEnd, 10);
          neighbor.sin_port = htons(nPort);
 
-         std::cout << "This is the port " << charIP << " and this is the port " << nPort << "\n";
+         // std::cout << "This is the port " << charIP << " and this is the port " << nPort << "\n";
 
          if(inet_pton(AF_INET, charIP, &neighbor.sin_addr)<=0) {
             printf("\nInvalid address/ Address not supported \n");
@@ -181,7 +181,7 @@ class Server {
 
           sd = client_socket[i];
           send(sd, header, strlen(header), 0);
-          std::cout << "Sending to client " << routes[i] << ": " << header << "\n";
+          // std::cout << "Sending to client " << routes[i] << ": " << header << "\n";
       }
     }
   }
@@ -490,13 +490,13 @@ public:
         max_sd = (max_sd > recSockets[i]) ? max_sd : recSockets[i];
       }
       selectStatus = select(max_sd + 1, &fdread, NULL, NULL, &tv);
-      std::cout << "This is selectStatus: " << selectStatus << "\n";
+      // std::cout << "This is selectStatus: " << selectStatus << "\n";
       if (selectStatus < 0)
       {
           printf("select failed\n ");
           return exit(1);
       } else if (selectStatus == 0) {
-          std::cout << "Nothing was read\n";
+          // std::cout << "Nothing was read\n";
       } else {
         for (int k = 0; k < numNeighbors; k++) {
           int sd = recSockets[k];
@@ -510,22 +510,6 @@ public:
         }
       }
     }
-
-
-
-
-      // if (selectStatus == recSockets[0] || selectStatus == recSockets[1]) {
-      //   readStatus = read_UDP_socket(FD, buffer, sizeof(buffer), &readCount );
-      //   printf("Got information from Client with socket %d: %s\n", sock, buffer);
-      //   memset(buffer, 0, 1025);
-      // }
-      // if((valread = read( sock , buffer, 1024) > 0)) {
-      //   printf("Got information from Client with socket %d: %s\n", sock, buffer);
-      //   memset(buffer, 0, 1025);
-      // }
-    // } else {
-    //   std::cout << "Nothing was read\n";
-    // }
   }
 
   void receivedMessage(char* message, int sd) {
@@ -546,7 +530,7 @@ public:
   void storeLocal(char* message) {
     int i;
     Key *k;
-    Value *v;
+    // Value *v;
     char* keyChar = new char[256];
     for (i = 4; i < strlen(message); i++) {
       if (message[i] == '}') {
@@ -560,21 +544,26 @@ public:
     char val[1024];
     memcpy(val, &message[i + 1], (strlen(message) - i + 1));
     val[strlen(message) - i + 1] = '\0';
-    v = new Value(val);
-    std::cout<<"I will store value " << val << " in key " << keyChar << "\n";
+    /*char *val2 = new char[1024];
+    strcpy(val2, val);
+    std::cout<<"I will store value " << val2 << " in key " << keyChar << "\n";
+    Value v(val2);*/
+    Value *v = new Value(val);
     store->put(k, v);
-
-    std::cout << "attempting to print key k's value: " <<  dynamic_cast<Value*>(store->get(k))->value << "\n";
+    // store->printall();
+    memset(message, 0, 1025);
+    // std::cout << "Address in store: " <<  store->get(k) << " v address " << &v << "\n";
+    // std::cout << "attempting to print key k's value: " <<  dynamic_cast<Value*>(store->get(k))->value << "\n";
   }
 
   void retrieveLocal(char* message, int sd) {
     //debugging
-    std::cout << "TRYING TO SEND TO SOCKET: " << sd << "\n";
+    // std::cout << "TRYING TO SEND TO SOCKET: " << sd << "\n";
     size_t sendToPort;
     for (int i = 0; i < numNeighbors; i++) {
-      std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
-      std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
-      std::cout << "recSockets[i]: " << recSockets[i] << "\n";
+      // std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
+      // std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
+      // std::cout << "recSockets[i]: " << recSockets[i] << "\n";
       if (recSockets[i] == sd) {
         sendToPort = ntohs(neighborRoutes[i].sin_port);
       }
@@ -595,17 +584,23 @@ public:
     char *keyVal = new char[4];
     strcat(keyVal, "RSP");
 
+    // std::cout<<"key " << k->key << "\n";
+    // store->printall();
+    // std::cout << "IN GET storeGet: " <<  store->get(k) << "\n";
+    // std::cout << "IN GET attempting to print key k's value: " <<  dynamic_cast<Value*>(store->get(k))->value << "\n";
     Value *v = dynamic_cast<Value*>(store->get(k));
+    // std::cout<<"About to print val " << "\n";
 
+    // std::cout<<"key " << v->value << "\n";
     Key *tempKey = new Key(keyVal, myPort - 8810);
     char* returnMsg = v->dataToSend(tempKey);
     // strcat(returnMsg, v->value);
-
-    // sleep(2);
+    // std::cout<<" AFTER dataToSend " << "\n";
+    sleep(1);
 
     // send(sd , returnMsg, strlen(returnMsg), 0);
     sendMessage(sendToPort, returnMsg);
-    std::cout << "Sending message to socket " << sd << ": " << returnMsg << "\n";
+    // std::cout << "Sending message to socket " << sd << ": " << returnMsg << "\n";
 
   }
 

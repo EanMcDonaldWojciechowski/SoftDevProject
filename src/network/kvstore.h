@@ -43,19 +43,17 @@ public:
 
   void waitForKey(Key* k);
 
+  Value* getChunkVal(size_t chunkNum, Key *ChunkKey);
+
   void sendInfo(Key *chunkKey, Value *val) {
     if (chunkKey->nodeIndex == nodeIndex) {
       store->put(chunkKey, val);
+      // std::cout<<"Storing locally on key " << chunkKey->key << " with value " << val->value << "\n";
     } else {
       client->sendMessage(basePort + chunkKey->nodeIndex, val->dataToSend(chunkKey));
     }
 
   }
-
-
-  // TODO: add method to add values from an incoming client message
-  // Add ChunkStore in Client constructor
-
 };
 
 class KVStore : public Object {
@@ -80,12 +78,5 @@ class KVStore : public Object {
    // DataFrame* waitAndGet(Key k) {
    //
    // }
-
-   /*void initializeNetwork() {
-     if (nodeIndex == 0) {
-
-     }
-     node = new Client()
-   }*/
 
 };

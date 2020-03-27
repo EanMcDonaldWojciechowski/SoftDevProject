@@ -107,11 +107,19 @@ class Hashmap_pair : public Object {
         Object* key_;
         Object* val_;
 
-        Hashmap_pair(Object *key, Object *val) : Object() {
-            key_ = key;
-            val_ = val;
+        // Hashmap_pair(Object *key, Object *val) : Object() {
+        //     key_ = key;
+        //     val_ = val;
+        // }
 
+        Hashmap_pair(Key *key, Value *val) : Object() {
+            key_ = key;
+            char *valPayload = new char[1024];
+            strcpy(valPayload, val->value);
+            val_ = new Value(valPayload);
         }
+
+
         ~Hashmap_pair() {
             delete key_;
             delete val_;
@@ -171,9 +179,10 @@ class Hashmap : public Object {
         // Returns the value to which the specified key is mapped,
         // or null if this map contains no mapping for the key.
         Object* get(Object *key) {
-          size_t hashKey = (key->hash() % capacity_);
-          //std::cout << "saved key " << data[hashKey]->key_ << " key " << key <<  " equals " << data[hashKey]->key_->equals(key) <<  "\n" ;
-          while(!data[hashKey]->key_->equals(key)) {
+          Key *key1 = dynamic_cast<Key*>(key);
+          size_t hashKey = (key1->hash() % capacity_);
+          // std::cout << "saved key " << dynamic_cast<Key*>(data[hashKey])->key << " key " << key1->key <<  " equals " << dynamic_cast<Key*>(data[hashKey])->equals(key) <<  "\n" ;
+          while(!data[hashKey]->key_->equals(key1)) {
             hashKey = (hashKey + 1) % capacity_;
           }
           return data[hashKey]->val_;
@@ -181,15 +190,16 @@ class Hashmap : public Object {
 
         // Returns true if the key exists, otherwise false
         bool keyExists(Object* key) {
-          size_t hashKey = (key->hash() % capacity_);
+          Key *key1 = dynamic_cast<Key*>(key);
+          size_t hashKey = (key1->hash() % capacity_);
           size_t iteration = 0;
-          printall();
+          // printall();
 
           for (int i = 0; i < capacity_; i++) {
             if (data[hashKey] == nullptr) {
               continue;
             }
-            if (data[hashKey]->key_->equals(key)) {
+            if (data[hashKey]->key_->equals(key1)) {
               return 1;
             }
             hashKey = (hashKey + 1) % capacity_;
@@ -199,20 +209,25 @@ class Hashmap : public Object {
 
         // Associates the specified value with the specified key in this map.
         void put(Object *key, Object *val) {
+          Key *key1 = dynamic_cast<Key*>(key);
+          Value *val1 = dynamic_cast<Value*>(val);
           if ((size_ + 1) * 2 > capacity_) {
             expand();
           }
-          size_t hashKey = (key->hash() % capacity_);
+          size_t hashKey = (key1->hash() % capacity_);
+          // std::cout << " key->hash() " << key1->hash() << "\n";
+          // std::cout << " hashKey " << hashKey << " capacity_ " << capacity_ << "\n";
           size_t i = hashKey;
+          // std::cout << "IN PUT i " << i << " hashKey " << hashKey << "\n";
           Hashmap_pair *temp = nullptr;
-          Hashmap_pair *newObject = new Hashmap_pair(key, val);
+          Hashmap_pair *newObject = new Hashmap_pair(key1, val1);
 
 
           bool dupKey = false;
           // Logic for finding when the next spot in map's hash equals key's hash
           // Keep going until we reach the end of the line of objects in the map
           while(!(data[i] == nullptr)) {
-            if (data[i]->key_->equals(key)) {
+            if (data[i]->key_->equals(key1)) {
               dupKey = true;
               break;
             }
@@ -231,6 +246,7 @@ class Hashmap : public Object {
               i = ((i + 1) % capacity_);
             }
           }
+          // std::cout << "IN PUT i " << i << " hashKey " << hashKey << "\n";
           if (!dupKey) {
             data[i] = newObject;
             size_++;
@@ -244,7 +260,8 @@ class Hashmap : public Object {
             }
             else {
               Key *castedO = dynamic_cast<Key*>(data[i]->key_);
-              std::cout << i << ": " << castedO->key << "\n";
+              Value *castedV = dynamic_cast<Value*>(data[i]->val_);
+              std::cout << i << ": " << castedO->key << " with hash location " << castedO->hash() % capacity_ << " with value " << castedV->value <<"\n";
             }
           }
           std::cout << "\n";
