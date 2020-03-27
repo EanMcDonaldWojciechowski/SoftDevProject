@@ -18,7 +18,7 @@ The application level will provide an extensible API that allows users to read a
 
 KVStore Level:
 
-Each node has a KVStore locally. The KVStore is responsible for storing and retrieving data. The KVStore acts as a single unit. Each KVStore has a map of all the keys to their values. When setting values for keys, if the key lives in the KVStore locally, then the KVStore will just set the value in the map for that key. If the key lives in a different node, the KVStore will let the networking level know which node has the key and what values to send over to the node so that it’s KVStore can store that key’s value in its map.
+Each node has a KVStore locally. The KVStore is responsible for storing and retrieving data. The KVStore acts as a single unit. The KVStore consists of two layers. First there is the KVStore layer, and beneath that there is the ChunkStore layer. The KVStore is responsible for mapping a Key to a Dataframe Value. From the application tier / user perspective a key is mapped directly to a dataframe’s serialized value, but underneath the KVStore is the ChunkStore, which is responsible for chunking and storing the dataframe. Each column in a dataframe is broken into chunks. Our column implementation was already designed this way from a previous assignment, so we wrote a method for serializing and deserializing specific chunks in a column.
 
 Networking Level:
 
@@ -53,12 +53,12 @@ The KVStore class represents the underlying kvstore mechanism that will support 
 
 class KVStore : public Object {
  public:
-   Hashmap store;
-   Client node;
+   ChunkStore *store;
    size_t nodeIndex;
 
-   KVStore(size_t nodeIndex) {
-     initizlizeNetwork();
+   KVStore(size_t nodeIndex_) {
+     nodeIndex = nodeIndex_;
+     store = new ChunkStore(nodeIndex);
    }
 
    ~KVStore() {}
@@ -73,16 +73,47 @@ class KVStore : public Object {
 
 };
 
+ChunkStore:
+The chunk store is in charge of managing where each chunk of a column gets delegated to and retrieving and building the column back up when the value of a key is requested. We had chunks start at node 0 and go round-robin to each node in order using mod. The chunk store is also in charge of initializing the network layer. If the chunk the chunk store is looking for lives locally, it will just retrieve that value and add onto the dataframe column. When the chunk store needs a chunk that does not live locally, it will request it from one of its neighbors and keep checking its database for a “RSP” key. The other chunk will send a response with the values requested with the key “RSP”. Once the “RSP” key is inserted into the requester’s hashmap, the requester will take the value of the key, parse that data and add those values in a dataframe, and remove the key and value from its hashmap so we are not aggregating data locally and using up our memory. Once one chunk is done, we will look for the next chunk and repeat the process.
+
+class ChunkStore : public Object {
+public:
+  Hashmap* store;
+  Client *client;
+  size_t nodeIndex;
+  size_t basePort = 8810;
+
+
+  ChunkStore(size_t nodeIndex_) {}
+
+  ~ChunkStore() {
+
+  }
+
+  void put(Key *k, DataFrame *v);
+
+  DataFrame* get(Key *k);
+
+  void waitForKey(Key* k);
+
+  Value* getChunkVal(size_t chunkNum, Key *ChunkKey);
+
+  void sendInfo(Key *chunkKey, Value *val);
+};
+
+
 Client and Networking:
 The “main” node (node 0) will start the server for all other clients to connect to. The server address will be hardcoded in every application instance, which will allow clients to connect to the server. Once every client (1 client per node) connects to the server, each client will receive the registration information of its neighbors. The clients can use this information to send messages directly to its neighbors to request data from neighbors or serve data requests to neighbors.
 
-From the client’s perspective, some things we will have to do is to allow the clients to listen for messages, process requests, and send out the requested information to the correct node. Right now, we have threads that listen to incoming messages and then the main thread sends out messages. Something new we want to implement is a select feature so that we can take away from the complexities of working with multiple threads.
+We changed the way our Clients listen to messages from their peers. We moved from numerous threads to the select method. When we receive a message, our program will retrieve the information the request asked for and then send that information to the correct node.
 
-With the select feature, we would just delegate the listening functionality to the OS and we check with the OS from time to time to see if a message is waiting for us. When we receive a message, our program will retrieve the information the request asked for and then send that information to the correct node.
+We created a simple message protocol for our network. Messages can have three letter prefixes that determine the type of message. GET is the code that is sent when a node wants to access a chunk value stored on another node. The message would include GET followed by the key that is being gotten. PUT is the code that is sent when a node wants to tell its neighbor to store a chunk. The PUT command should be followed by the key and data that will be stored.
+
+The final code we have implemented so far is RSP, which is the response code. When a node sends a GET request it must have some way of waiting for a response. To handle get requests we send a PUT message back to the node that originally sent the GET request with a special Key(“RSP”). After the GET request is made the network waits for a response, which comes in the form of PUT RSP followed by the data that was requested. The original node then waits until its local hashmap has a key of RSP (which will contain the GET value it is looking for) and then deserializes the value of the value paired with the key RSP.
 
 
 Serialization:
-Currently, we are able to serialize and deserialize information. We will need to use the logic there to serialize and deserialize requests and KV information transfer. This will be a very similar method to what we do right now.
+Currently, we are able to serialize and deserialize information. To tackle the new changes we made to KVStore and the networking layers we had to change how we serialized columns. To handle chunking the columns of a dataframe we implemented two methods in column: serializechunk and deserializechunk. These methods only serialize one section of a column so that we can store a column across multiple nodes.
 
 
 Use cases: examples of uses of the system. This could be in the form of code like the one above. It is okay to leave this section mostly empty if there is nothing to say. Maybe just an example of creating a dataframe would be enough.
@@ -135,10 +166,8 @@ public:
 
 Open questions: where you list things that you are not sure of and would like the answer to.
 
-What does get() and waitAndGet() return? Is it an Object, Dataframe, Array? Will we need to cast? Example: DataFrame* result = kv.waitAndGet(verify);
-
-Currently, Dataframe::fromArray() takes an array and creates a dataframe, which is stored in the distributed kvstore. The example code given to us demonstrates how to store a single column dataframe. If we create a dataframe from a sor file using sorer, how can this dataframe (which already has values and numerous columns) be stored in the kvstore. Do we need to create a Dataframe::fromDataframe method? How can we store an existing dataframe in the distributed kvstore?
+What are the main differences between get and waitandget? Does wait and get just wait until the key exists? Does this go on forever? What happens if get is called and the key does not exist?
 
 Status: where you describe what has been done and give an estimate of the work that remains.
 
-The conceptual is done. A lot of the detailed technical stuff is done. We now have to get what we have done for previous assignments working for this assignments. This means changing serialize and deserialize to work with requests and key value store data, clients to be able to delegate information to the right clients, the Key Value stores, the columns to store different chunks on different clients, and the application to be able to work with all of that.
+Large part of the implementation has been done. A lot of the detailed technical stuff is done. We now have to fix up a few bugs, clean up our code, and get the entire application working as a whole without major problems.
