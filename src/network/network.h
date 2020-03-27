@@ -126,7 +126,7 @@ class Server {
          nPort = strtol(charPort, &pEnd, 10);
          neighbor.sin_port = htons(nPort);
 
-         // std::cout << "This is the port " << charIP << " and this is the port " << nPort << "\n";
+         std::cout << "This is the port " << charIP << " and this is the port " << nPort << "\n";
 
          if(inet_pton(AF_INET, charIP, &neighbor.sin_addr)<=0) {
             printf("\nInvalid address/ Address not supported \n");
@@ -181,7 +181,7 @@ class Server {
 
           sd = client_socket[i];
           send(sd, header, strlen(header), 0);
-          // std::cout << "Sending to client " << routes[i] << ": " << header << "\n";
+          std::cout << "Sending to client " << routes[i] << ": " << header << "\n";
       }
     }
   }
@@ -510,6 +510,22 @@ public:
         }
       }
     }
+
+
+
+
+      // if (selectStatus == recSockets[0] || selectStatus == recSockets[1]) {
+      //   readStatus = read_UDP_socket(FD, buffer, sizeof(buffer), &readCount );
+      //   printf("Got information from Client with socket %d: %s\n", sock, buffer);
+      //   memset(buffer, 0, 1025);
+      // }
+      // if((valread = read( sock , buffer, 1024) > 0)) {
+      //   printf("Got information from Client with socket %d: %s\n", sock, buffer);
+      //   memset(buffer, 0, 1025);
+      // }
+    // } else {
+    //   std::cout << "Nothing was read\n";
+    // }
   }
 
   void receivedMessage(char* message, int sd) {
@@ -550,7 +566,7 @@ public:
     Value v(val2);*/
     Value *v = new Value(val);
     store->put(k, v);
-    // store->printall();
+    store->printall();
     memset(message, 0, 1025);
     // std::cout << "Address in store: " <<  store->get(k) << " v address " << &v << "\n";
     // std::cout << "attempting to print key k's value: " <<  dynamic_cast<Value*>(store->get(k))->value << "\n";
@@ -558,12 +574,12 @@ public:
 
   void retrieveLocal(char* message, int sd) {
     //debugging
-    // std::cout << "TRYING TO SEND TO SOCKET: " << sd << "\n";
+    std::cout << "TRYING TO SEND TO SOCKET: " << sd << "\n";
     size_t sendToPort;
     for (int i = 0; i < numNeighbors; i++) {
-      // std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
-      // std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
-      // std::cout << "recSockets[i]: " << recSockets[i] << "\n";
+      std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
+      std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
+      std::cout << "recSockets[i]: " << recSockets[i] << "\n";
       if (recSockets[i] == sd) {
         sendToPort = ntohs(neighborRoutes[i].sin_port);
       }
@@ -584,7 +600,7 @@ public:
     char *keyVal = new char[4];
     strcat(keyVal, "RSP");
 
-    // std::cout<<"key " << k->key << "\n";
+    std::cout<<"key " << k->key << "\n";
     // store->printall();
     // std::cout << "IN GET storeGet: " <<  store->get(k) << "\n";
     // std::cout << "IN GET attempting to print key k's value: " <<  dynamic_cast<Value*>(store->get(k))->value << "\n";
