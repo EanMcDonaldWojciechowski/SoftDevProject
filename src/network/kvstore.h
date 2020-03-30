@@ -48,11 +48,25 @@ public:
   void sendInfo(Key *chunkKey, Value *val) {
     if (chunkKey->nodeIndex == nodeIndex) {
       store->put(chunkKey, val);
-      // std::cout<<"Storing locally on key " << chunkKey->key << " with value " << val->value << "\n";
     } else {
       client->sendMessage(basePort + chunkKey->nodeIndex, val->dataToSend(chunkKey));
     }
+  }
 
+  Key* getChunkKey(Key* k, size_t clientNum, size_t chunkNum) {
+    char* chunkStoreKey = new char[1024];
+    memset(chunkStoreKey, 0, 1025);
+    strcat(chunkStoreKey, k->key);
+    strcat(chunkStoreKey, "_");
+    char nodeIdxChar[256];
+    snprintf(nodeIdxChar,sizeof(k->nodeIndex), "%d", k->nodeIndex);
+    strcat(chunkStoreKey, nodeIdxChar);
+    strcat(chunkStoreKey, "_");
+    char iIdxChar[256];
+    snprintf(iIdxChar,sizeof(chunkNum), "%d", chunkNum);
+    strcat(chunkStoreKey, iIdxChar);
+    Key *chunkKey = new Key(chunkStoreKey, clientNum);
+    return chunkKey;
   }
 };
 

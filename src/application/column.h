@@ -73,7 +73,6 @@ class Column : public Object {
   virtual void push_back(float val) {}
   virtual void push_back(String* val) {}
 
-  virtual char* serializeChunk(int idx) {}
   virtual void printCol() {}
 
  /** Returns the number of elements in the column. */
@@ -81,8 +80,30 @@ class Column : public Object {
   /** Returns the number of chunks. */
   virtual size_t getNumChunks() {return 0;}
 
+  // serialze column data into a char
+  virtual char* serializeChunk(int idx) {}
   // append chunk serialized data onto column
   virtual void deserializeChunk(char* data) {}
+  // serialize column Metadata
+  virtual char* serializeMetadata() {
+    // add meta data for frist chunk
+    char* data = new char[1024];
+    data[1023] = '\0';
+    char chunkNum[256];
+    snprintf(chunkNum, sizeof(getNumChunks()), "%d", getNumChunks());
+    strcat(data, chunkNum);
+    strcat(data, "}");
+    char doubleChar[256];
+    snprintf(doubleChar,sizeof(size()), "%d", size());
+    strcat(data, doubleChar);
+    strcat(data, "}");
+    char *colType =  new char[2];
+    colType[0] = get_type();
+    strcat(data, colType);
+    strcat(data, "}");
+
+    return data;
+  }
 
   /** Return the type of this column as a char: 'S', 'B', 'I' and 'F'. **/
   virtual char get_type() { return 'N';}
@@ -375,7 +396,6 @@ class FloatColumn : public Column {
     }
     size_t chunkLoc = idx / sizeOfChunk;
     size_t idxInChunk = idx % sizeOfChunk;
-    //std::cout << "get ChunkLoc: " << chunkLoc << " cIDX: " << idxInChunk << "\n";
     return elements[chunkLoc][idxInChunk];
   }
 
@@ -435,8 +455,7 @@ class FloatColumn : public Column {
         break;
       }
       char doubleChar[256];
-      snprintf(doubleChar,8, "%f", elements[idx][i]);
-      // std::cout<<"Actual float at position " << elements[idx][i] << " but we got " << doubleChar << "\n";
+      snprintf(doubleChar, 8, "%f", elements[idx][i]);
       strcat(data, doubleChar);
       strcat(data, "}");
     }
@@ -471,6 +490,8 @@ class FloatColumn : public Column {
        std::cout << "For i " << i << " = " << get(i) << "\n";
      }
    }
+
+
 
 };
 

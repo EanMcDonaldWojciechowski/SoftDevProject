@@ -65,8 +65,8 @@ class Value : public Object {
 
    char* dataToSend(Key* key) {
      // std::cout << "value before: " << value << "\n";
-     char* data = new char[1024];
-     data[1023] = '\0';
+     char* data = new char[2048];
+     data[2048] = '\0';
      char doubleChar[256];
      strcat(data, "PUT}");
      // std::cout << "this is key: " << key->key << "\n";
@@ -79,8 +79,8 @@ class Value : public Object {
 
    char* dataToRetrieve(Key* key, size_t chunkNum) {
      // std::cout << "value before: " << value << "\n";
-     char* data = new char[1024];
-     data[1023] = '\0';
+     char* data = new char[2048];
+     data[2048] = '\0';
      strcat(data, "GET}");
      // std::cout << "this is key: " << key->key << "\n";
      strcat(data, key->key);
@@ -114,7 +114,7 @@ class Hashmap_pair : public Object {
 
         Hashmap_pair(Key *key, Value *val) : Object() {
             key_ = key;
-            char *valPayload = new char[1024];
+            char *valPayload = new char[2048];
             strcpy(valPayload, val->value);
             val_ = new Value(valPayload);
         }

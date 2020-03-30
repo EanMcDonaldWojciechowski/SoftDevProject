@@ -27,6 +27,6 @@ int main(int argc, char** argv) {
   // DataFrame *newDF = kv->get(k);
   //std::cout << "Printing final DF" << "\n";
   //newDF->print();
-  sleep(15);
+  sleep(7);
   std::cout << "COMPLETED" << "\n";
 }

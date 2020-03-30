@@ -31,13 +31,13 @@ class Server {
     int valread;
     int sd;
     int max_sd;
-    char buffer[1025]; //data buffer of 1K
+    char buffer[2048]; //data buffer of 1K
     struct sockaddr_in address;
     fd_set readfds; //set of socket descriptors
     bool open;
 
   Server(char* ip) {
-    // initialize();
+
   }
 
   ~Server() {
@@ -87,8 +87,7 @@ class Server {
   void waitForConnections() {
 
     //try to specify maximum of 3 pending connections for the master socket
-    if (listen(master_socket, 3) < 0)
-    {
+    if (listen(master_socket, 3) < 0) {
         perror("listen");
         exit(EXIT_FAILURE);
     }
@@ -96,13 +95,11 @@ class Server {
     addrlen = sizeof(address);
 
     while(numRoutes < max_clients) {
-
         printf("before new connection , socket fd is %d , ip is : %s , port : %d\n" ,
         new_socket , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
 
         if ((new_socket = accept(master_socket,
-                (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
-        {
+                (struct sockaddr *)&address, (socklen_t*)&addrlen))<0) {
             perror("accept");
             exit(EXIT_FAILURE);
         }
@@ -112,7 +109,7 @@ class Server {
 
        // Reading client information
        int nPort;
-       if((valread = read( new_socket , buffer, 1024) > 0)) {
+       if((valread = read( new_socket , buffer, 2048) > 0)) {
          printf("Got information from Client: %s\n", buffer);
          struct sockaddr_in neighbor;
          neighbor.sin_family = AF_INET;
@@ -132,7 +129,7 @@ class Server {
             printf("\nInvalid address/ Address not supported \n");
             exit(1);
          }
-         memset(buffer, 0, 1025);
+         memset(buffer, 0, 2048);
          actualClientRoutes[numRoutes] = neighbor;
        }
        routes[numRoutes] = nPort;
@@ -196,7 +193,7 @@ class Server {
       if (FD_ISSET( sd , &readfds)) {
           //Check if it was for closing , and also read the
           //incoming message
-          if ((valread = read( sd , buffer, 1025)) == 0) {
+          if ((valread = read( sd , buffer, 2048)) == 0) {
               //Somebody disconnected , get his details and print
               getpeername(sd , (struct sockaddr*)&address , \
                   (socklen_t*)&addrlen);
@@ -242,7 +239,7 @@ public:
   int valread;
   struct sockaddr_in serv_addr;
   struct sockaddr_in my_addr;
-  char buffer[1025] = {0};
+  char buffer[2048] = {0};
   bool online = TRUE;
   int opt = TRUE;
   int currSocket;
@@ -259,7 +256,6 @@ public:
     store = store_;
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(port);
-    // if(inet_pton(AF_INET, myIP, &my_addr.sin_addr) <= 0) {
     if(inet_pton(AF_INET, myIP, &my_addr.sin_addr) <= 0) {
       printf("\nInvalid address/ Address not supported \n");
   		exit(1);
@@ -274,29 +270,14 @@ public:
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
-
     printf("Client conn info: , socket fd is %d , ip is : %s , port : %d\n" ,
     currSocket , inet_ntoa(my_addr.sin_addr) , ntohs(my_addr.sin_port));
-
     connectToServer();
     configureWithServer();
-    std::cout<<"Done with configureWithServer.\n";
+
     std::thread* t1 = new std::thread(&Client::acceptPeers, this);
-    // sleep(1);
-    std::cout<<"Main thread moving to connect to peers.\n";
     connectToPeers();
-    std::cout<<"Joining now.\n";
     t1->join();
-
-
-    std::cout<<"Creating threads to listen to peers.\n";
-    // Creating threads to listen to peers.
-    /*std::thread* pool[numNeighbors];
-    for (int i = 0; i < numNeighbors; i++) {
-      int listenSocket = recSockets[i];
-      pool[i] = new std::thread(&Client::readPeerMessages, this, listenSocket);
-    }*/
-
     new std::thread(&Client::readPeerMessages, this);
 
     std::cout<<"Main thread done.\n";
@@ -305,28 +286,10 @@ public:
   ~Client() {
     delete[] sendSockets;
     delete[] recSockets;
-    // delete[] buffer;
-    // neighborRoutes[0].~sockeraddr_in();
-    // neighborRoutes[1].~sockeraddr_in();
     delete[] neighborRoutes;
   }
 
   void sendMessage(int sendTo, const char* msg) {
-    std::cout<<"Sending message now.\n";
-    // char* header = new char[3];
-    // strcpy(header, "S:myPort D:sendTo M:msg");
-    // strcpy(header, "S:");
-    // char myPortChar[5];
-    // sprintf(myPortChar, "%d", myPort);
-    // strcat(header, myPortChar);
-    // strcat(header, " D:");
-    // strcat(header, sendTo);
-    // char clientPortChar[5];
-    // sprintf(clientPortChar, "%d", sendTo);
-    // strcat(header, clientPortChar);
-    // strcat(header, " M:");
-    // strcat(header, msg);
-
     // figure out which socket to use
     int clientSock;
     for (int i = 0; i < numNeighbors; i++) {
@@ -334,33 +297,25 @@ public:
         clientSock = sendSockets[i];
       }
     }
-
-
-    // send(clientSock , header , strlen(header) , 0);
+    usleep(100000);
     send(clientSock , msg , strlen(msg) , 0);
     std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
   }
 
   void connectToServer() {
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-  	{
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
   		printf("\n Socket creation error \n");
   		exit(1);
   	}
   	serv_addr.sin_family = AF_INET;
   	serv_addr.sin_port = htons(PORT);
-
-  	// Convert IPv4 and IPv6 addresses from text to binary form
-  	if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0)
-  	{
+  	if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0) {
   		printf("\nInvalid address/ Address not supported \n");
   		exit(1);
   	}
-
     printf("Server connection in client , socket fd is %d , ip is : %s , port : %d\n" ,
     sock , inet_ntoa(serv_addr.sin_addr) , ntohs(serv_addr.sin_port));
-  	if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-  	{
+  	if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
   		printf("\nConnection Failed \n");
       exit(1);
   	}
@@ -368,11 +323,9 @@ public:
   }
 
   void configureWithServer() {
-
-    // Sending my port to server.
     char* header = new char[4];
     strcpy(header, "IP:");
-    char* thisaddress = new char[10]; // "127.0.0.1"
+    char* thisaddress = new char[10];
     strcpy(thisaddress, myIP);
     strcat(header, thisaddress);
     strcat(header, " P:");
@@ -383,8 +336,7 @@ public:
     send(sock, header, strlen(header), 0);
     std::cout << "Sending to server my info: " << header << "\n";
 
-    // Reading first neighbor information
-    if((valread = read( sock , buffer, 1024) > 0)) {
+    if((valread = read( sock , buffer, 2048) > 0)) {
       printf("Got information from Server: %s\n", buffer);
       struct sockaddr_in neighbor;
       neighbor.sin_family = AF_INET;
@@ -398,18 +350,17 @@ public:
       int nPort = strtol(charPort, &pEnd, 10);
       neighbor.sin_port = htons(nPort);
       std::cout << "n1 IP is " << charIP << " and port is " << nPort << "\n";
-      if(inet_pton(AF_INET, charIP, &neighbor.sin_addr)<=0)
-    	{
+      if(inet_pton(AF_INET, charIP, &neighbor.sin_addr)<=0) {
     		printf("\nInvalid address/ Address not supported \n");
     		exit(1);
     	}
       neighborRoutes[numNeighbors] = neighbor;
       numNeighbors++;
-      memset(buffer, 0, 1025);
+      memset(buffer, 0, 2048);
     }
 
     // Reading second neighbor information
-    if((valread = read( sock , buffer, 1024) > 0)) {
+    if((valread = read( sock , buffer, 2048) > 0)) {
       printf("Got information from Server: %s\n", buffer);
       struct sockaddr_in neighbor;
       neighbor.sin_family = AF_INET;
@@ -423,14 +374,13 @@ public:
       int nPort = strtol(charPort, &pEnd, 10);
       neighbor.sin_port = htons(nPort);
       std::cout << "n2 IP is " << charIP << " and port is " << nPort << "\n";
-      if(inet_pton(AF_INET, charIP, &neighbor.sin_addr)<=0)
-    	{
+      if(inet_pton(AF_INET, charIP, &neighbor.sin_addr)<=0) {
     		printf("\nInvalid address/ Address not supported \n");
     		exit(1);
     	}
       neighborRoutes[numNeighbors] = neighbor;
       numNeighbors++;
-      memset(buffer, 0, 1025);
+      memset(buffer, 0, 2048);
     }
 
   }
@@ -441,8 +391,7 @@ public:
     struct sockaddr_in peer_addr;
     int numPeers = 0;
     std::cout<<"Accepting new peers. numPeers is " << numPeers << " and numNeighbors is " << numNeighbors << "\n";
-    while((new_peer = accept(currSocket, (struct sockaddr *)&peer_addr, (socklen_t*)&peer_addr)) > 0)
-    {
+    while((new_peer = accept(currSocket, (struct sockaddr *)&peer_addr, (socklen_t*)&peer_addr)) > 0) {
       printf("Peer connection in client , socket fd is %d , ip is : %s , port : %d\n" ,
       sock , inet_ntoa(peer_addr.sin_addr) , ntohs(peer_addr.sin_port));
       recSockets[numPeers] = new_peer;
@@ -455,19 +404,17 @@ public:
 
 
   void connectToPeers() {
-    sleep(1);
+    usleep(100000);
     for (int i = 0; i < numNeighbors; i++) {
       struct sockaddr_in peer_addr = neighborRoutes[i];
       int peerSock;
-      // open socket for peer connection
       if((peerSock = socket(AF_INET , SOCK_STREAM , 0)) == 0) {
         perror("peer socket failed");
         exit(EXIT_FAILURE);
       }
       printf("Connecting to peer client , socket fd is %d , ip is : %s , port : %d\n" ,
       peerSock , inet_ntoa(peer_addr.sin_addr) , ntohs(peer_addr.sin_port));
-      if (connect(peerSock, (struct sockaddr *)&peer_addr, sizeof(peer_addr)) < 0)
-      {
+      if (connect(peerSock, (struct sockaddr *)&peer_addr, sizeof(peer_addr)) < 0) {
         printf("\nConnection Failed \n");
         exit(1);
       }
@@ -490,13 +437,11 @@ public:
         max_sd = (max_sd > recSockets[i]) ? max_sd : recSockets[i];
       }
       selectStatus = select(max_sd + 1, &fdread, NULL, NULL, &tv);
-      // std::cout << "This is selectStatus: " << selectStatus << "\n";
-      if (selectStatus < 0)
-      {
+      if (selectStatus < 0) {
           printf("select failed\n ");
           return exit(1);
       } else if (selectStatus == 0) {
-          // std::cout << "Nothing was read\n";
+          // Do nothing
       } else {
         for (int k = 0; k < numNeighbors; k++) {
           int sd = recSockets[k];
@@ -510,22 +455,6 @@ public:
         }
       }
     }
-
-
-
-
-      // if (selectStatus == recSockets[0] || selectStatus == recSockets[1]) {
-      //   readStatus = read_UDP_socket(FD, buffer, sizeof(buffer), &readCount );
-      //   printf("Got information from Client with socket %d: %s\n", sock, buffer);
-      //   memset(buffer, 0, 1025);
-      // }
-      // if((valread = read( sock , buffer, 1024) > 0)) {
-      //   printf("Got information from Client with socket %d: %s\n", sock, buffer);
-      //   memset(buffer, 0, 1025);
-      // }
-    // } else {
-    //   std::cout << "Nothing was read\n";
-    // }
   }
 
   void receivedMessage(char* message, int sd) {
@@ -546,7 +475,6 @@ public:
   void storeLocal(char* message) {
     int i;
     Key *k;
-    // Value *v;
     char* keyChar = new char[256];
     for (i = 4; i < strlen(message); i++) {
       if (message[i] == '}') {
@@ -557,29 +485,18 @@ public:
       theval[0] = message[i];
       strcat(keyChar, theval);
     }
-    char val[1024];
+    char val[2048];
     memcpy(val, &message[i + 1], (strlen(message) - i + 1));
     val[strlen(message) - i + 1] = '\0';
-    /*char *val2 = new char[1024];
-    strcpy(val2, val);
-    std::cout<<"I will store value " << val2 << " in key " << keyChar << "\n";
-    Value v(val2);*/
     Value *v = new Value(val);
     store->put(k, v);
     store->printall();
-    memset(message, 0, 1025);
-    // std::cout << "Address in store: " <<  store->get(k) << " v address " << &v << "\n";
-    // std::cout << "attempting to print key k's value: " <<  dynamic_cast<Value*>(store->get(k))->value << "\n";
+    memset(message, 0, 2048);
   }
 
   void retrieveLocal(char* message, int sd) {
-    //debugging
-    std::cout << "TRYING TO SEND TO SOCKET: " << sd << "\n";
     size_t sendToPort;
     for (int i = 0; i < numNeighbors; i++) {
-      std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
-      std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
-      std::cout << "recSockets[i]: " << recSockets[i] << "\n";
       if (recSockets[i] == sd) {
         sendToPort = ntohs(neighborRoutes[i].sin_port);
       }
@@ -599,25 +516,12 @@ public:
     }
     char *keyVal = new char[4];
     strcat(keyVal, "RSP");
-
-    std::cout<<"key " << k->key << "\n";
-    // store->printall();
-    // std::cout << "IN GET storeGet: " <<  store->get(k) << "\n";
-    // std::cout << "IN GET attempting to print key k's value: " <<  dynamic_cast<Value*>(store->get(k))->value << "\n";
     Value *v = dynamic_cast<Value*>(store->get(k));
-    // std::cout<<"About to print val " << "\n";
-
-    // std::cout<<"key " << v->value << "\n";
     Key *tempKey = new Key(keyVal, myPort - 8810);
     char* returnMsg = v->dataToSend(tempKey);
-    // strcat(returnMsg, v->value);
-    // std::cout<<" AFTER dataToSend " << "\n";
-    sleep(1);
+    usleep(100000);
 
-    // send(sd , returnMsg, strlen(returnMsg), 0);
     sendMessage(sendToPort, returnMsg);
-    // std::cout << "Sending message to socket " << sd << ": " << returnMsg << "\n";
-
   }
 
   void terminate() {
