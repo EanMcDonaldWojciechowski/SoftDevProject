@@ -280,7 +280,12 @@ public:
     t1->join();
     new std::thread(&Client::readPeerMessages, this);
 
-    std::cout<<"Main thread done.\n";
+    std::cout<<"Main thread done. Here are my sockets:\n";
+    for (int i = 0; i < numNeighbors; i++) {
+      std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
+      std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
+      std::cout << "recSockets[i]: " << recSockets[i] << "\n";
+    }
   }
 
   ~Client() {
@@ -393,8 +398,26 @@ public:
     std::cout<<"Accepting new peers. numPeers is " << numPeers << " and numNeighbors is " << numNeighbors << "\n";
     while((new_peer = accept(currSocket, (struct sockaddr *)&peer_addr, (socklen_t*)&peer_addr)) > 0) {
       printf("Peer connection in client , socket fd is %d , ip is : %s , port : %d\n" ,
-      sock , inet_ntoa(peer_addr.sin_addr) , ntohs(peer_addr.sin_port));
-      recSockets[numPeers] = new_peer;
+      new_peer , inet_ntoa(peer_addr.sin_addr) , ntohs(peer_addr.sin_port));
+      valread = read( new_peer , buffer, 2048);
+      char* pEnd;
+      size_t spotInArray = strtol(buffer, &pEnd, 10);
+      std::cout << "INIT other client's port: " << spotInArray << " received on socket " << new_peer << "\n";
+
+      int pos;
+      for (int i = 0; i < numNeighbors; i++) {
+        if (ntohs(neighborRoutes[i].sin_port) == spotInArray) {
+          pos = i;
+        }
+
+      }
+
+    //  if (myPort == 8810) {
+    //     spotInArray -= 1;
+    //   } else if (myPort == 8811 && spotInArray == "") {
+    //     spotInArray -= 1;
+    //   }
+      recSockets[pos] = new_peer;
       numPeers++;
       if (numPeers == numNeighbors) {
         break;
@@ -418,6 +441,12 @@ public:
         printf("\nConnection Failed \n");
         exit(1);
       }
+      char *data = new char[2048];
+      char returnChar[256];
+      snprintf(returnChar, 8, "%d", myPort);
+      strcat(data, returnChar);
+      std::cout << "INIT sending to socket " << peerSock << " with my port " << data << "\n";
+      send(peerSock , data , strlen(data) , 0);
       sendSockets[i] = peerSock;
     }
   }
@@ -497,11 +526,13 @@ public:
   void retrieveLocal(char* message, int sd) {
     size_t sendToPort;
     for (int i = 0; i < numNeighbors; i++) {
+      std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
+      std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
+      std::cout << "recSockets[i]: " << recSockets[i] << "\n";
       if (recSockets[i] == sd) {
         sendToPort = ntohs(neighborRoutes[i].sin_port);
       }
     }
-
 
     char* keyChar = new char[256];
     Key *k;

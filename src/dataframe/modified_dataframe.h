@@ -3,11 +3,11 @@
 #include <stdarg.h>
 #include <iostream>
 #include <string.h>
+#include "helper.h"
 #include "../application/object.h"
 #include "../application/string.h"
 #include "../application/column.h"
 #include "schema.h"
-#include "helper.h"
 #include "fielder.h"
 #include "fielderPrint.h"
 #include "row.h"
@@ -147,31 +147,6 @@ class DataFrame : public Object {
     }
     return column[col]->as_string()->get(row);
   }
-
-  // /** Return the offset of the given column name or -1 if no such col. */
-  // int get_col(String& col) {
-  //   for (int i = 0; i < scm->width(); i++) {
-  //     if (scm->col_name(i) != nullptr) {
-  //       if (col.equals(scm->col_name(i))) {
-  //         return i;
-  //       }
-  //
-  //     }
-  //   }
-  //   return -1;
-  // }
-  //
-  // /** Return the offset of the given row name or -1 if no such row. */
-  // int get_row(String& col) {
-  //   for (int i = 0; i < scm->length(); i++) {
-  //     if (scm->row_name(i) != nullptr) {
-  //       if (col.equals(scm->row_name(i))) {
-  //         return i;
-  //       }
-  //     }
-  //   }
-  //   return -1;
-  // }
 
   /** Set the value at the given column and row to the given value.
     * If the column is not  of the right type or the indices are out of
@@ -413,7 +388,7 @@ class DataFrame : public Object {
   }
 
   /** Stores float values in KVStore and returns it as a dataframe */
-  DataFrame* fromArray(Key *key, KVStore *kv, size_t size, double* vals) {
+  DataFrame* fromArray(Key *key, KVStore *kv, size_t size, float* vals) {
     Column *c = new FloatColumn();
     for (int i = 0; i < size; i++) {
       c->as_float()->push_back((float)vals[i]);
@@ -455,10 +430,10 @@ class DataFrame : public Object {
   }
 
   /** Stores String values in KVStore and returns it as a dataframe */
-  DataFrame* fromArray(Key *key, KVStore *kv, size_t size, String* vals) {
+  DataFrame* fromArray(Key *key, KVStore *kv, size_t size, String** vals) {
     Column *c = new StringColumn();
     for (int i = 0; i < size; i++) {
-      c->as_string()->push_back(&vals[i]);
+      c->as_string()->push_back(vals[i]);
     }
     Schema *s = new Schema();
     DataFrame *df = new DataFrame(*s);
@@ -466,6 +441,34 @@ class DataFrame : public Object {
 
     kv->put(key, df);
     return df;
+  }
+
+  /** Stores int values in KVStore and returns it as a dataframe */
+  DataFrame* fromScalar(Key *key, KVStore *kv, int val) {
+    int *vals = new int[1];
+    vals[0] = val;
+    return fromArray(key, kv, 1, vals);
+  }
+
+  /** Stores int values in KVStore and returns it as a dataframe */
+  DataFrame* fromScalar(Key *key, KVStore *kv, float val) {
+    float *vals = new float[1];
+    vals[0] = val;
+    return fromArray(key, kv, 1, vals);
+  }
+
+  /** Stores int values in KVStore and returns it as a dataframe */
+  DataFrame* fromScalar(Key *key, KVStore *kv, bool val) {
+    bool *vals = new bool[1];
+    vals[0] = val;
+    return fromArray(key, kv, 1, vals);
+  }
+
+  /** Stores int values in KVStore and returns it as a dataframe */
+  DataFrame* fromScalar(Key *key, KVStore *kv, String* val) {
+    String **vals = new String*[1];
+    vals[0] = val;
+    return fromArray(key, kv, 1, vals);
   }
 
 };

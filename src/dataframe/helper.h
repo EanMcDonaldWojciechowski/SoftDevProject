@@ -12,6 +12,8 @@
 class Sys {
  public:
 
+ Sys() {}
+
   // Printing functions
   Sys& p(char* c) { std::cout << c; return *this; }
   Sys& p(bool c) { std::cout << c; return *this; }
@@ -60,22 +62,22 @@ class Sys {
   void t_true(bool p) { if (!p) myfail(); }
   void t_false(bool p) { if (p) myfail(); }
 
-  char toChar(int i) {
+  char* toChar(size_t i) {
     char returnChar[256];
     snprintf(returnChar, sizeof(i), "%d", i);
-    return *returnChar;
+    return returnChar;
   }
 
-  char toChar(float i) {
+  char* toChar(float i) {
     char returnChar[256];
     snprintf(returnChar, 8, "%f", i);
-    return *returnChar;
+    return returnChar;
   }
 
-  char toChar(bool i) {
+  char* toChar(bool i) {
     char returnChar[256];
     snprintf(returnChar, sizeof(i), "%d", i);
-    return *returnChar;
+    return returnChar;
   }
 
   int toInt(char* val) {

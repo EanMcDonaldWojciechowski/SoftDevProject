@@ -86,14 +86,15 @@ class Column : public Object {
   virtual void deserializeChunk(char* data) {}
   // serialize column Metadata
   virtual char* serializeMetadata() {
+    Sys *sys = new Sys();
     // add meta data for frist chunk
     char* data = new char[1024];
     data[1023] = '\0';
-    char chunkNum[256];
+    char chunkNum[1024];
     snprintf(chunkNum, sizeof(getNumChunks()), "%d", getNumChunks());
     strcat(data, chunkNum);
     strcat(data, "}");
-    char doubleChar[256];
+    char doubleChar[1024];
     snprintf(doubleChar,sizeof(size()), "%d", size());
     strcat(data, doubleChar);
     strcat(data, "}");
