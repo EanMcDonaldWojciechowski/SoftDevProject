@@ -483,6 +483,20 @@ DataFrame* KVStore::get(Key *k) {
   return store->get(k);
 }
 
+DataFrame* KVStore::waitAndGet(Key *k) {
+  char* chunkStoreKey = new char[1024];
+  memset(chunkStoreKey, 0, 1025);
+  strcat(chunkStoreKey, k->key);
+  strcat(chunkStoreKey, "_");
+  char nodeIdxChar[256];
+  snprintf(nodeIdxChar,sizeof(k->nodeIndex), "%d", k->nodeIndex);
+  strcat(chunkStoreKey, nodeIdxChar);
+  strcat(chunkStoreKey, "_END");
+  Key *chunkKey = new Key(chunkStoreKey, nodeIndex);
+  store->waitForKey(chunkKey);
+  return store->get(k);
+}
+
 
 void ChunkStore::put(Key *k, DataFrame *v) {
   Column* col = v->column[0];
@@ -508,6 +522,20 @@ void ChunkStore::put(Key *k, DataFrame *v) {
       Value *dataVal = new Value(val);
       sendInfo(chunkKey, dataVal);
     }
+  }
+  char* chunkStoreKey = new char[1024];
+  memset(chunkStoreKey, 0, 1025);
+  strcat(chunkStoreKey, k->key);
+  strcat(chunkStoreKey, "_");
+  char nodeIdxChar[256];
+  snprintf(nodeIdxChar,sizeof(k->nodeIndex), "%d", k->nodeIndex);
+  strcat(chunkStoreKey, nodeIdxChar);
+  strcat(chunkStoreKey, "_END");
+  char* dataFinal = new char[1024];
+  Value *dataValFinal = new Value(dataFinal);
+  for (int i = 0; i < 3; i++) {
+    Key *chunkKeyFinal = new Key(chunkStoreKey, i);
+    sendInfo(chunkKeyFinal, dataValFinal);
   }
 }
 

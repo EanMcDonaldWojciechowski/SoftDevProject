@@ -19,10 +19,11 @@ int main(int argc, char** argv) {
   KVStore *kv = new KVStore(nodeIndex);
   Key *k = new Key("main", 0);
   // kv->put(k, df);
-  sleep(4);
-  DataFrame *newDF = kv->get(k);
+  // sleep(4);
+  // DataFrame *newDF = kv->get(k);
+  DataFrame *newDF = kv->waitAndGet(k);
   std::cout << "Printing final DF" << "\n";
   newDF->print();
-  sleep(1);
+  // sleep(1);
   std::cout << "COMPLETED" << "\n";
 }

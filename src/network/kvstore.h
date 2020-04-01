@@ -89,8 +89,6 @@ class KVStore : public Object {
 
    DataFrame* get(Key *k);
 
-   // DataFrame* waitAndGet(Key k) {
-   //
-   // }
+   DataFrame* waitAndGet(Key *k);
 
 };
