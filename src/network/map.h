@@ -107,10 +107,10 @@ class Hashmap_pair : public Object {
         Object* key_;
         Object* val_;
 
-        // Hashmap_pair(Object *key, Object *val) : Object() {
-        //     key_ = key;
-        //     val_ = val;
-        // }
+        Hashmap_pair(String *key, Num *val) : Object() {
+            key_ = key;
+            val_ = val;
+        }
 
         Hashmap_pair(Key *key, Value *val) : Object() {
             key_ = key;
@@ -178,7 +178,7 @@ class Hashmap : public Object {
 
         // Returns the value to which the specified key is mapped,
         // or null if this map contains no mapping for the key.
-        Object* get(Object *key) {
+        virtual Object* get(Object *key) {
           Key *key1 = dynamic_cast<Key*>(key);
           size_t hashKey = (key1->hash() % capacity_);
           // std::cout << "saved key " << dynamic_cast<Key*>(data[hashKey])->key << " key " << key1->key <<  " equals " << dynamic_cast<Key*>(data[hashKey])->equals(key) <<  "\n" ;
@@ -189,7 +189,7 @@ class Hashmap : public Object {
         }
 
         // Returns true if the key exists, otherwise false
-        bool keyExists(Object* key) {
+        virtual bool keyExists(Object* key) {
           Key *key1 = dynamic_cast<Key*>(key);
           size_t hashKey = (key1->hash() % capacity_);
           size_t iteration = 0;
@@ -208,7 +208,7 @@ class Hashmap : public Object {
         }
 
         // Associates the specified value with the specified key in this map.
-        void put(Object *key, Object *val) {
+        virtual void put(Object *key, Object *val) {
           Key *key1 = dynamic_cast<Key*>(key);
           Value *val1 = dynamic_cast<Value*>(val);
           if ((size_ + 1) * 2 > capacity_) {
@@ -253,7 +253,7 @@ class Hashmap : public Object {
           }
         };
 
-        void printall() {
+        virtual void printall() {
           for (size_t i = 0; i < capacity_; i++) {
             if (data[i] == nullptr) {
               std::cout << i << ": null \n";
