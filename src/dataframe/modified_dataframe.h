@@ -487,12 +487,88 @@ class DataFrame : public Object {
 
 
 void KVStore::put(Key *k, DataFrame *v) {
-  store->put(k, v);
+  size_t numCols = v->scm->width();
+
+  std::cout<<"first numCol: " << numCols << "\n";
+
+  char *colType = v->scm->colType;
+  String *metaDataStr = new String(colType);
+  Column *c = new StringColumn();
+  c->push_back(metaDataStr);
+  Schema *s = new Schema();
+  DataFrame *metaData = new DataFrame(*s);
+  metaData->add_column(c);
+
+  store->put(k, metaData);
+
+  std::cout<<"second\n";
+
+  Key *colKey;
+  Schema *colS = new Schema();
+  DataFrame *colDf;
+  for (int i = 0; i < numCols; i++) {
+    char* colKeyChar = new char[1024];
+    memset(colKeyChar, 0, 1025);
+    strcat(colKeyChar, k->key);
+    strcat(colKeyChar, "_");
+    char nodeIdxChar[256];
+    snprintf(nodeIdxChar,sizeof(i), "%d", i);
+    strcat(colKeyChar, nodeIdxChar);
+    strcat(colKeyChar, "_");
+    char *colTypeChar = new char[2];
+    colTypeChar[0] = colType[i];
+    colTypeChar[1] = '\0';
+    strcat(colKeyChar, colTypeChar);
+
+    std::cout<<"third\n";
+
+    colDf = new DataFrame(*colS);
+    colDf->add_column(v->column[i]);
+
+    colKey = new Key(colKeyChar, k->nodeIndex);
+    std::cout<<"forth\n";
+    store->put(colKey, colDf);
+  }
 }
 
 
 DataFrame* KVStore::get(Key *k) {
-  return store->get(k);
+  if (!store->store->keyExists(k)) {
+    std::cout << "Key doesn't exist. \n";
+    exit(1);
+  }
+
+  Schema *colS = new Schema();
+  DataFrame *retDf = new DataFrame(*colS);
+
+  DataFrame *metaDF = store->waitAndGet(k);
+  String *colTypes = metaDF->get_string(0,0);
+
+  char type;
+  DataFrame *singleColDF;
+  Key *colKey;
+  for (int i = 0; i < strlen(colTypes->c_str()); i++) {
+    type = colTypes->c_str()[i];
+
+    char* colKeyChar = new char[1024];
+    memset(colKeyChar, 0, 1025);
+    strcat(colKeyChar, k->key);
+    strcat(colKeyChar, "_");
+    char nodeIdxChar[256];
+    snprintf(nodeIdxChar,sizeof(i), "%d", i);
+    strcat(colKeyChar, nodeIdxChar);
+    strcat(colKeyChar, "_");
+    char *typeStr = new char[2];
+    typeStr[0] = type;
+    typeStr[1] = '\0';
+    strcat(colKeyChar, typeStr);
+    colKey = new Key(colKeyChar, k->nodeIndex);
+
+    singleColDF = store->waitAndGet(colKey);
+    retDf->add_column(singleColDF->column[0]);
+  }
+
+  return retDf;
 }
 
 DataFrame* KVStore::waitAndGet(Key *k) {
