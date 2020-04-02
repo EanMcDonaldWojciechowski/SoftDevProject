@@ -208,7 +208,7 @@ public:
     words->local_map(add);
     delete words;
     Summer cnt(map);
-    delete DataFrame::fromVisitor(mk_key(index), &kv, "SI", cnt);
+    delete DataFrame::fromVisitor(mk_key(index), &kv, "SI", cnt);   6}340}2}S}I}String1}13}String2}14}String3}15       Key("data") --> "SI"       "data_0_0_S_0" "data_0_1_I_1"   "data_0*"
   }
 
   /** Merge the data frames of all nodes */

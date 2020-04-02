@@ -471,6 +471,18 @@ class DataFrame : public Object {
     return fromArray(key, kv, 1, vals);
   }
 
+  // DataFrame* fromVisitor(Key* key, KVStore *kv, const char* colType, Writer *vals) {
+  //   size_t numCols = strlen(colType);
+  //   Schema *s = new Schema(colType);
+  //   DataFrame *df = new DataFrame(s);
+  //   Row *r = new Row(s);
+  //   while (!vals->done()) {
+  //     vals->visit(r);
+  //     add_row(r);
+  //   }
+  //   kv->put(key, df);
+  //   return df;
+  // }
 };
 
 
@@ -484,17 +496,10 @@ DataFrame* KVStore::get(Key *k) {
 }
 
 DataFrame* KVStore::waitAndGet(Key *k) {
-  char* chunkStoreKey = new char[1024];
-  memset(chunkStoreKey, 0, 1025);
-  strcat(chunkStoreKey, k->key);
-  strcat(chunkStoreKey, "_");
-  char nodeIdxChar[256];
-  snprintf(nodeIdxChar,sizeof(k->nodeIndex), "%d", k->nodeIndex);
-  strcat(chunkStoreKey, nodeIdxChar);
-  strcat(chunkStoreKey, "_END");
-  Key *chunkKey = new Key(chunkStoreKey, nodeIndex);
+  char* endChunk = store->constructEndKey(k);
+  Key *chunkKey = new Key(endChunk, k->nodeIndex);
   store->waitForKey(chunkKey);
-  return store->get(k);
+  return store->waitAndGet(k);
 }
 
 
@@ -523,16 +528,10 @@ void ChunkStore::put(Key *k, DataFrame *v) {
       sendInfo(chunkKey, dataVal);
     }
   }
-  char* chunkStoreKey = new char[1024];
-  memset(chunkStoreKey, 0, 1025);
-  strcat(chunkStoreKey, k->key);
-  strcat(chunkStoreKey, "_");
-  char nodeIdxChar[256];
-  snprintf(nodeIdxChar,sizeof(k->nodeIndex), "%d", k->nodeIndex);
-  strcat(chunkStoreKey, nodeIdxChar);
-  strcat(chunkStoreKey, "_END");
-  char* dataFinal = new char[1024];
-  Value *dataValFinal = new Value(dataFinal);
+  char* chunkStoreKey = constructEndKey(k);
+  char *finalVal = new char[2];
+  finalVal[0] = col->get_type();
+  Value *dataValFinal = new Value(finalVal);
   for (int i = 0; i < 3; i++) {
     Key *chunkKeyFinal = new Key(chunkStoreKey, i);
     sendInfo(chunkKeyFinal, dataValFinal);
@@ -540,6 +539,53 @@ void ChunkStore::put(Key *k, DataFrame *v) {
 }
 
 DataFrame* ChunkStore::get(Key *k) {
+  char* endKey = constructEndKey(k);
+  Key *finalKey = new Key(endKey, k->nodeIndex);
+  waitForKey(finalKey);
+  Value *finalVal = dynamic_cast<Value*>(store->get(finalKey));
+  Column *col;
+  if (finalVal->value[0] == 'I') {
+    col = new IntColumn();
+  } else if (finalVal->value[0] == 'B') {
+    col = new BoolColumn();
+  } else if (finalVal->value[0] == 'F') {
+    col = new FloatColumn();
+  } else if (finalVal->value[0] == 'S') {
+    col = new StringColumn();
+  }
+
+  char* chunkStoreKey = new char[1024];
+  memset(chunkStoreKey, 0, 1025);
+  strcat(chunkStoreKey, k->key);
+  strcat(chunkStoreKey, "_");
+  char nodeIdxChar[256];
+  snprintf(nodeIdxChar,sizeof(k->nodeIndex), "%d", k->nodeIndex);
+  strcat(chunkStoreKey, nodeIdxChar);
+  strcat(chunkStoreKey, "_");
+  Key *parentKey = new Key(chunkStoreKey, k->nodeIndex);
+  Key** subKeys = store->getSubKeys(parentKey);
+  size_t i = 0;
+  Value *chunkVal;
+  while (subKeys[i] != nullptr) {
+    chunkVal = dynamic_cast<Value*>(store->get(subKeys[i]));
+    if (finalVal->value[0] == 'I') {
+      col->as_int()->deserializeChunk(chunkVal->value);
+    } else if (finalVal->value[0] == 'B') {
+      col->as_bool()->deserializeChunk(chunkVal->value);
+    } else if (finalVal->value[0] == 'F') {
+      col->as_float()->deserializeChunk(chunkVal->value);
+    } else if (finalVal->value[0] == 'S') {
+      col->as_string()->deserializeChunk(chunkVal->value);
+    }
+    i++;
+  }
+  Schema *s = new Schema();
+  DataFrame *df = new DataFrame(*s);
+  df->add_column(col);
+  return df;
+}
+
+DataFrame* ChunkStore::waitAndGet(Key *k) {
   Value *firstChunk;
   Key *firstChunkKey = getChunkKey(k, k->nodeIndex, 0);
 

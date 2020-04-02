@@ -19,6 +19,11 @@
        nodeIndex = nodeIndex_;
      }
 
+     Key(char* key_) {
+       key = key_;
+       nodeIndex = 0;
+     }
+
      ~Key() {
        delete[] key;
      }
@@ -107,10 +112,10 @@ class Hashmap_pair : public Object {
         Object* key_;
         Object* val_;
 
-        Hashmap_pair(String *key, Num *val) : Object() {
-            key_ = key;
-            val_ = val;
-        }
+        // Hashmap_pair(String *key, Num *val) : Object() {
+        //     key_ = key;
+        //     val_ = val;
+        // }
 
         Hashmap_pair(Key *key, Value *val) : Object() {
             key_ = key;
@@ -205,6 +210,40 @@ class Hashmap : public Object {
             hashKey = (hashKey + 1) % capacity_;
           }
           return 0;
+        }
+
+        // returns all subkeys for key
+        Key** getSubKeys(Key* key) {
+          Key** result = new Key*[size_ + 1];
+          for (int j = 0; j < size_; j++) {
+            result[j] = nullptr;
+          }
+          size_t count = 0;
+          for (size_t i = 0; i < capacity_; i++) {
+            if (data[i] != nullptr) {
+              Key *castedO = dynamic_cast<Key*>(data[i]->key_);
+              if (keyMatch(key, castedO)) {
+                result[count] = castedO;
+                count++;
+              }
+            }
+          }
+          return result;
+        }
+
+        // checks if a child key's beginning is the same as the entire parent key
+        bool keyMatch(Key* parent, Key* child) {
+          size_t parentLen = strlen(parent->key);
+          size_t childLen = strlen(child->key);
+          if (childLen < parentLen) {
+            return 0;
+          }
+          for (int i = 0; i < parentLen; i++) {
+            if (parent->key[i] != child->key[i]) {
+              return 0;
+            }
+          }
+          return 1;
         }
 
         // Associates the specified value with the specified key in this map.

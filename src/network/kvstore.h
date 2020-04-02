@@ -39,6 +39,8 @@ public:
 
   void put(Key *k, DataFrame *v);
 
+  DataFrame* waitAndGet(Key *k);
+
   DataFrame* get(Key *k);
 
   void waitForKey(Key* k);
@@ -67,6 +69,18 @@ public:
     strcat(chunkStoreKey, iIdxChar);
     Key *chunkKey = new Key(chunkStoreKey, clientNum);
     return chunkKey;
+  }
+
+  char* constructEndKey(Key *k) {
+    char* chunkStoreKey = new char[1024];
+    memset(chunkStoreKey, 0, 1025);
+    strcat(chunkStoreKey, k->key);
+    strcat(chunkStoreKey, "_");
+    char nodeIdxChar[256];
+    snprintf(nodeIdxChar,sizeof(k->nodeIndex), "%d", k->nodeIndex);
+    strcat(chunkStoreKey, nodeIdxChar);
+    strcat(chunkStoreKey, "_END");
+    return chunkStoreKey;
   }
 };
 
