@@ -471,18 +471,18 @@ class DataFrame : public Object {
     return fromArray(key, kv, 1, vals);
   }
 
-  // DataFrame* fromVisitor(Key* key, KVStore *kv, const char* colType, Writer *vals) {
-  //   size_t numCols = strlen(colType);
-  //   Schema *s = new Schema(colType);
-  //   DataFrame *df = new DataFrame(s);
-  //   Row *r = new Row(s);
-  //   while (!vals->done()) {
-  //     vals->visit(r);
-  //     add_row(r);
-  //   }
-  //   kv->put(key, df);
-  //   return df;
-  // }
+  DataFrame* fromVisitor(Key* key, KVStore *kv, const char* colType, Writer *vals) {
+    size_t numCols = strlen(colType);
+    Schema *s = new Schema(colType);
+    DataFrame *df = new DataFrame(s);
+    Row *r = new Row(s);
+    while (!vals->done()) {
+      vals->visit(r);
+      add_row(r);
+    }
+    kv->put(key, df);
+    return df;
+  }
 };
 
 
@@ -545,16 +545,25 @@ void KVStore::put(Key *k, DataFrame *v) {
 
 
 DataFrame* KVStore::get(Key *k) {
-  if (!store->store->keyExists(k)) {
-    std::cout << "Key doesn't exist. \n";
-    exit(1);
-  }
+  // if (!store->store->keyExists(k)) {
+  //   std::cout << "Key doesn't exist. \n";
+  //   exit(1);
+  // }
 
+  char* colKeyChar = new char[1024];
+  memset(colKeyChar, 0, 1025);
+  strcat(colKeyChar, k->key);
+  strcat(colKeyChar, "_DONE");
+  Key *chunkKey = new Key(colKeyChar, nodeIndex);
+  // std::cout<<"Looking for key " << colKeyChar << " with nodeidx " << nodeIndex << "\n";
+  store->waitForKey(chunkKey);
+  // std::cout<<"FOUND KEY MOVING ON \n";
   Schema *colS = new Schema();
   DataFrame *retDf = new DataFrame(*colS);
 
-  DataFrame *metaDF = store->waitAndGet(k);
-  String *colTypes = metaDF->get_string(0,0);
+  Value *metaValue = dynamic_cast<Value*>(store->store->get(chunkKey));
+  // std::cout<<"GOT Metadata \n";
+  String *colTypes = new String(metaValue->value);
 
   char type;
   DataFrame *singleColDF;
@@ -576,7 +585,7 @@ DataFrame* KVStore::get(Key *k) {
     strcat(colKeyChar, typeStr);
     colKey = new Key(colKeyChar, k->nodeIndex);
 
-    singleColDF = store->waitAndGet(colKey);
+    singleColDF = store->get(colKey);
     retDf->add_column(singleColDF->column[0]);
   }
 
