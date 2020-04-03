@@ -20,10 +20,11 @@ int main(int argc, char** argv) {
   Key *k = new Key("main", 0);
   // kv->put(k, df);
   // sleep(4);
+  std::cout << "GETING VALUES NOW______________" << "\n";
   // DataFrame *newDF = kv->get(k);
   DataFrame *newDF = kv->waitAndGet(k);
   std::cout << "Printing final DF" << "\n";
   newDF->print();
-  // sleep(1);
+  // sleep(10);
   std::cout << "COMPLETED" << "\n";
 }

@@ -504,8 +504,6 @@ void KVStore::put(Key *k, DataFrame *v) {
   std::cout<<"second\n";
 
   Key *colKey;
-  Schema *colS = new Schema();
-  DataFrame *colDf;
   for (int i = 0; i < numCols; i++) {
     char* colKeyChar = new char[1024];
     memset(colKeyChar, 0, 1025);
@@ -520,14 +518,28 @@ void KVStore::put(Key *k, DataFrame *v) {
     colTypeChar[1] = '\0';
     strcat(colKeyChar, colTypeChar);
 
-    std::cout<<"third\n";
+    std::cout<<"third colKeyChar is " << colKeyChar << " \n";
 
-    colDf = new DataFrame(*colS);
+    Schema *colS = new Schema();
+    DataFrame *colDf = new DataFrame(*colS);
     colDf->add_column(v->column[i]);
+    std::cout << "ith col i = " << i << " has the following type " << v->column[i]->get_type() << "\n";
 
     colKey = new Key(colKeyChar, k->nodeIndex);
     std::cout<<"forth\n";
     store->put(colKey, colDf);
+    delete colDf;
+    delete colS;
+  }
+
+  char* chunkStoreKey = new char[1024];
+  memset(chunkStoreKey, 0, 1025);
+  strcat(chunkStoreKey, k->key);
+  strcat(chunkStoreKey, "_DONE");
+  Value *dataValFinal = new Value(colType);
+  for (int i = 0; i < 3; i++) {
+    Key *chunkKeyFinal = new Key(chunkStoreKey, i);
+    store->sendInfo(chunkKeyFinal, dataValFinal);
   }
 }
 
@@ -572,15 +584,51 @@ DataFrame* KVStore::get(Key *k) {
 }
 
 DataFrame* KVStore::waitAndGet(Key *k) {
-  char* endChunk = store->constructEndKey(k);
-  Key *chunkKey = new Key(endChunk, k->nodeIndex);
+  char* colKeyChar = new char[1024];
+  memset(colKeyChar, 0, 1025);
+  strcat(colKeyChar, k->key);
+  strcat(colKeyChar, "_DONE");
+  Key *chunkKey = new Key(colKeyChar, k->nodeIndex);
   store->waitForKey(chunkKey);
-  return store->waitAndGet(k);
+
+  Schema *colS = new Schema();
+  DataFrame *retDf = new DataFrame(*colS);
+
+  DataFrame *metaDF = store->waitAndGet(k);
+  String *colTypes = metaDF->get_string(0,0);
+
+  char type;
+  DataFrame *singleColDF;
+  Key *colKey;
+  for (int i = 0; i < strlen(colTypes->c_str()); i++) {
+    type = colTypes->c_str()[i];
+    std::cout << "finding column #" << i << " type " << type << "\n";
+
+    char* colKeyChar = new char[1024];
+    memset(colKeyChar, 0, 1025);
+    strcat(colKeyChar, k->key);
+    strcat(colKeyChar, "_");
+    char nodeIdxChar[256];
+    snprintf(nodeIdxChar,sizeof(i), "%d", i);
+    strcat(colKeyChar, nodeIdxChar);
+    strcat(colKeyChar, "_");
+    char *typeStr = new char[2];
+    typeStr[0] = type;
+    typeStr[1] = '\0';
+    strcat(colKeyChar, typeStr);
+    colKey = new Key(colKeyChar, k->nodeIndex);
+
+    singleColDF = store->waitAndGet(colKey);
+    retDf->add_column(singleColDF->column[0]);
+  }
+
+  return retDf;
 }
 
 
 void ChunkStore::put(Key *k, DataFrame *v) {
   Column* col = v->column[0];
+  std::cout << "inside CS put col has type " << v->column[0]->get_type() << "\n";
   char* data = col->serializeMetadata();
   char* val;
   for (int i = 0; i < col->getNumChunks(); i++) {

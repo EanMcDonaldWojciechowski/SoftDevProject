@@ -264,7 +264,7 @@ class BoolColumn : public Column {
     char* data = new char[1024];
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
-      if (idx * sizeOfChunk + i == count_) {
+      if (idx * sizeOfChunk + i >= count_) {
         break;
       }
       char doubleChar[256];
@@ -452,7 +452,7 @@ class FloatColumn : public Column {
     char* data = new char[1024];
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
-      if (idx * sizeOfChunk + i == count_) {
+      if (idx * sizeOfChunk + i >= count_) {
         break;
       }
       char doubleChar[256];
@@ -650,7 +650,7 @@ class IntColumn : public Column {
     char* data = new char[1024];
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
-      if (idx * sizeOfChunk + i == count_) {
+      if (idx * sizeOfChunk + i >= count_) {
         break;
       }
       char doubleChar[256];
