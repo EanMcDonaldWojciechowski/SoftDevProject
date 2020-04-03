@@ -478,7 +478,7 @@ class DataFrame : public Object {
     Row *r = new Row(s);
     while (!vals->done()) {
       vals->visit(r);
-      add_row(r);
+      df->add_row(r);
     }
     kv->put(key, df);
     return df;

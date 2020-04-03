@@ -3,20 +3,19 @@
  * Key::
  * Stores values by key
  */
-class Writer : public Object {
+class Writer : public Rower {
  public:
-   int v;
 
-   Num() {
-     v = 0;
-   }
-
-   Num(int v_) {
-     v = v_;
-   }
-
-   ~Num() {
+   Writer() {
 
    }
+
+   ~Writer() {
+
+   }
+
+   void visit(Row & r);
+
+   bool done() {return 0;}
 
 };

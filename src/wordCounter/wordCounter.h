@@ -201,11 +201,13 @@ public:
 
   /** Compute word counts on the local node and build a data frame. */
   void local_count() {
-    DataFrame* words = (kv.waitAndGet(in));
+    DataFrame* words = (kv.get(in));
+    // DataFrame* words = (kv.waitAndGet(in)); // We need to local implementation
     p("Node ").p(index).pln(": starting local count...");
     SIMap map;
     Adder add(map);
-    words->local_map(add);
+    words->map(add);
+    // words->local_map(add); // df doesn't know about networking so it is just working with local data
     delete words;
     Summer cnt(map);
     delete DataFrame::fromVisitor(mk_key(index), &kv, "SI", cnt);
