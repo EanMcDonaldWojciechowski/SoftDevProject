@@ -20,7 +20,7 @@ public:
      }
    }
 
-}
+};
 
 
 class FileReader : public Writer {
@@ -177,9 +177,12 @@ public:
   Key in;
   KeyBuff kbuf;
   SIMap all;
+  
+  // WordCount(size_t idx, NetworkIfc & net):
+  //   Application(idx, net), in("data"), kbuf(new Key("wc-map-",0)) { }
 
-  WordCount(size_t idx, NetworkIfc & net):
-    Application(idx, net), in("data"), kbuf(new Key("wc-map-",0)) { }
+  WordCount(size_t idx):
+    Application(idx), in("data"), kbuf(new Key("wc-map-",0)) { }
 
   /** The master nodes reads the input, then all of the nodes count. */
   void run_() override {

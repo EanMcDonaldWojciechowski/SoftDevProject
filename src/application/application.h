@@ -10,7 +10,7 @@ class Application : public Object {
 
    Application(size_t nodeIndex_) {
      nodeIndex = nodeIndex_;
-
+     kv = new KVStore(nodeIndex);
    }
 
    ~Application() {

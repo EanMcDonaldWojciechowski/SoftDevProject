@@ -18,6 +18,8 @@
 #include "../network/map.h"
 #include "../network/network.h"
 #include "../network/KVStore.h"
+#include "../wordCounter/SIMap.h"
+#include "../wordCounter/wordCounter.h"
 
 // class KVStore;
 // class Key;
