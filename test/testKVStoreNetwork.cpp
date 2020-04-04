@@ -20,13 +20,13 @@ int main(int argc, char** argv) {
   // df->add_column(vals);
   // df->print();
 
-  KVStore *kv = new KVStore(nodeIndex);
+  KVStore *kv = new KVStore(nodeIndex, 5);
   Key *k = new Key("main", 0);
   // sleep(5);
   // kv->put(k, df);
   // DataFrame *newDF = kv->get(k);
   //std::cout << "Printing final DF" << "\n";
   //newDF->print();
-  sleep(12);
+  sleep(20);
   std::cout << "COMPLETED" << "\n";
 }

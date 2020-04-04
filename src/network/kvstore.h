@@ -9,28 +9,29 @@ public:
   Client *client;
   size_t nodeIndex;
   size_t basePort = 8810;
+  size_t num_nodes;
 
-
-  ChunkStore(size_t nodeIndex_) {
+  ChunkStore(size_t nodeIndex_, size_t num_nodes_) {
     store = new Hashmap();
     nodeIndex = nodeIndex_;
+    num_nodes = num_nodes_;
+
     if (nodeIndex == 0) {
-      // TODO: Create thread to create the server
-      std::cout << "creating server \n";
-      Server *server = new Server("127.0.0.1");
-      std::cout << "creating server thread \n";
+      Server *server = new Server("127.0.0.1", num_nodes);
       std::thread *t1 = new std::thread(&Server::initialize, server);
-      // t1->join();
-      // sleep(1);
-      std::cout << "creating client on server machine \n";
-      client = new Client("127.0.0.2", basePort + nodeIndex, store);
-    } else if (nodeIndex == 1) {
-      // sleep(2);
-      client = new Client("127.0.0.3", basePort + nodeIndex, store);
-    } else if (nodeIndex == 2) {
-      // sleep(2);
-      client = new Client("127.0.0.4", basePort + nodeIndex, store);
     }
+
+    char* clientIP = new char[256];
+    strcat(clientIP, "127.0.0.");
+    std::cout << "before " << clientIP << "\n";
+    char* nodeIdxChar = new char[256];
+    std::cout << "before1 \n";
+    snprintf(nodeIdxChar, sizeof(nodeIndex + 2), "%d", nodeIndex + 2);
+    std::cout << "before2 "<< nodeIdxChar << "\n";
+    strcat(clientIP, nodeIdxChar);
+    std::cout << "after " << clientIP << "\n";
+    client = new Client(clientIP, basePort + nodeIndex, store, num_nodes);
+
    }
 
   ~ChunkStore() {
@@ -88,10 +89,12 @@ class KVStore : public Object {
  public:
    ChunkStore *store;
    size_t nodeIndex;
+   size_t num_nodes;
 
-   KVStore(size_t nodeIndex_) {
+   KVStore(size_t nodeIndex_, size_t num_nodes_) {
      nodeIndex = nodeIndex_;
-     store = new ChunkStore(nodeIndex);
+     num_nodes = num_nodes_;
+     store = new ChunkStore(nodeIndex, num_nodes);
    }
 
    ~KVStore() {

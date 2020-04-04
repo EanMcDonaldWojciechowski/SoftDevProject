@@ -1,17 +1,30 @@
 // # include <stdio.h>
-class Writer {
+
+class KeyBuff : public Object {
+  public:
+  Key* orig_; // external
+  StrBuff buf_;
+
+  KeyBuff(Key* orig) : orig_(orig), buf_(*orig) {}
+
+  KeyBuff& c(String &s) { buf_.c(s); return *this;  }
+  KeyBuff& c(size_t v) { buf_.c(v); return *this; }
+  KeyBuff& c(const char* v) { buf_.c(v); return *this; }
+
+  Key* get() {
+    String* s = buf_.get();
+    buf_.c(orig_->c_str());
+    Key* k = new Key(s->steal(), orig_->home());
+    delete s;
+    return k;
+  }
+}; // KeyBuff
+
+class Writer : public Rower {
 public:
   char* buf_;
-
-  Writer() {
-
-  }
-
-  ~Writer() {
-
-  }
-
-
+  Writer() {}
+  ~Writer() {}
    bool isspace(char ch) {
      if (ch == ' ') {
        return 1;
@@ -19,9 +32,17 @@ public:
        return 0;
      }
    }
-
+   virtual void visit(Row & r);
+   virtual bool done() {return 0;}
 };
 
+class Reader : public Rower {
+public:
+  Reader() {}
+  ~Reader() {}
+   virtual void visit(Row & r);
+   virtual bool done() {return 0;}
+};
 
 class FileReader : public Writer {
 public:
@@ -42,8 +63,9 @@ public:
             ++i_;
         }
         buf_[i_] = 0;
-        String word(buf_ + wStart, i_ - wStart);
-        r.set(0, word);
+        // String word(buf_ + wStart, i_ - wStart);
+        String word(buf_ + wStart);
+        r.set(0, &word);
         ++i_;
         skipWhitespace_();
     }
@@ -165,6 +187,27 @@ public:
   bool done() {return seen == map_.size(); }
 };
 
+class Application : public Object {
+ public:
+   size_t nodeIndex;
+   size_t num_nodes;
+   KVStore *kv;
+
+   Application(size_t nodeIndex_, size_t num_nodes_) {
+     nodeIndex = nodeIndex_;
+     num_nodes = num_nodes_;
+     kv = new KVStore(nodeIndex, num_nodes);
+   }
+
+   ~Application() {
+
+   }
+
+   virtual voir run();
+
+
+};
+
 /****************************************************************************
  * Calculate a word count for given file:
  *   1) read the data (single node)
@@ -177,16 +220,17 @@ public:
   Key in;
   KeyBuff kbuf;
   SIMap all;
-  
+  size_t num_nodes;
+
   // WordCount(size_t idx, NetworkIfc & net):
   //   Application(idx, net), in("data"), kbuf(new Key("wc-map-",0)) { }
 
-  WordCount(size_t idx):
-    Application(idx), in("data"), kbuf(new Key("wc-map-",0)) { }
+  WordCount(size_t idx): // Add command line parsing here
+    Application(idx, num_nodes), in("data"), kbuf(new Key("wc-map-",0)) { }
 
   /** The master nodes reads the input, then all of the nodes count. */
   void run_() override {
-    if (index == 0) {
+    if (nodeIndex == 0) {
       FileReader fr;
       delete DataFrame::fromVisitor(&in, &kv, "S", fr);
     }
@@ -198,7 +242,8 @@ public:
    *  which then joins them one by one. */
   Key* mk_key(size_t idx) {
       Key * k = kbuf.c(idx).get();
-      LOG("Created key " << k->c_str());
+      // LOG("Created key " << k->c_str());
+      std::cout << "Created key " << k->c_str() << "\n";
       return k;
   }
 
@@ -206,29 +251,31 @@ public:
   void local_count() {
     DataFrame* words = (kv.get(in));
     // DataFrame* words = (kv.waitAndGet(in)); // We need to local implementation
-    p("Node ").p(index).pln(": starting local count...");
+    // p("Node ").p(nodeIndex).pln(": starting local count...");
+    std::cout << "Node " << nodeIndex << ": starting local count...\n";
     SIMap map;
     Adder add(map);
     words->map(add);
     // words->local_map(add); // df doesn't know about networking so it is just working with local data
     delete words;
     Summer cnt(map);
-    delete DataFrame::fromVisitor(mk_key(index), &kv, "SI", cnt);
+    delete DataFrame::fromVisitor(mk_key(nodeIndex), &kv, "SI", cnt);
   }
 
   /** Merge the data frames of all nodes */
   void reduce() {
-    if (index != 0) return;
-    pln("Node 0: reducing counts...");
+    if (nodeIndex != 0) return;
+    std::cout << "Node 0: reducing counts...\n";
     SIMap map;
     Key* own = mk_key(0);
-    merge(kv.get(*own), map);
-    for (size_t i = 1; i < arg.num_nodes; ++i) { // merge other nodes
+    merge(kv->get(*own), map);
+    for (size_t i = 1; i < num_nodes; ++i) { // merge other nodes
       Key* ok = mk_key(i);
-      merge(kv.waitAndGet(*ok), map);
+      merge(kv->waitAndGet(*ok), map);
       delete ok;
     }
-    p("Different words: ").pln(map.size());
+    // p("Different words: ").pln(map.size());
+    std::cout << "Different words: " << map.size() << "\n";
     delete own;
   }
 

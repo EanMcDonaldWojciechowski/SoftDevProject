@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv) {
   size_t nodeIndex = 2;
-  size_t SZ = 10*30 + 25;
+  size_t SZ = 10*50 + 25;
   Column *vals = new StringColumn();
   for (size_t i = 0; i < SZ; i++) {
     char nodeIdxChar[256];
@@ -35,12 +35,12 @@ int main(int argc, char** argv) {
   std::cout << "Printing DF" << "\n";
   // df->print();
 
-  KVStore *kv = new KVStore(nodeIndex);
+  KVStore *kv = new KVStore(nodeIndex, 5);
   Key *k = new Key("main", 0);
   kv->put(k, df);
   //DataFrame *newDF = kv->get(k);
   //std::cout << "Printing final DF" << "\n";
   //newDF->print();
-  sleep(12);
+  sleep(20);
   std::cout << "COMPLETED" << "\n";
 }

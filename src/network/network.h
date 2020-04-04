@@ -20,14 +20,14 @@ class Server {
   public:
     char* myIP;
     int numRoutes = 0;
-    int* routes = new int[3];
-    sockaddr_in* actualClientRoutes = new sockaddr_in[3];
+    int* routes;
+    sockaddr_in* actualClientRoutes;
     int opt = TRUE;
     int master_socket;
     int addrlen;
     int new_socket;
-    int client_socket[3];
-    int max_clients = 3;
+    int* client_socket;
+    int max_clients;
     int valread;
     int sd;
     int max_sd;
@@ -36,8 +36,12 @@ class Server {
     fd_set readfds; //set of socket descriptors
     bool open;
 
-  Server(char* ip) {
-
+  Server(char* ip, size_t num_nodes) {
+    max_clients = num_nodes;
+    routes = new int[max_clients];
+    actualClientRoutes = new sockaddr_in[max_clients];
+    client_socket = new int[max_clients];
+    std::cout<<"Server constructor done.\n";
   }
 
   ~Server() {
@@ -46,6 +50,7 @@ class Server {
   }
 
   void initialize() {
+    std::cout << "server init started \n";
     open = true;
     // myIP = ip;
     myIP = "127.0.0.1";
@@ -54,9 +59,11 @@ class Server {
     }
 
     master_socket = openSocket(0, address);
-
+    std::cout<<"waiting for clients to connect.\n";
     waitForConnections();
+    std::cout << "waited for connects \n";
     informClients();
+    std::cout << "informed clients \n";
   }
 
   int openSocket(size_t socketNum, sockaddr_in address) {
@@ -87,7 +94,7 @@ class Server {
   void waitForConnections() {
 
     //try to specify maximum of 3 pending connections for the master socket
-    if (listen(master_socket, 3) < 0) {
+    if (listen(master_socket, max_clients) < 0) {
         perror("listen");
         exit(EXIT_FAILURE);
     }
@@ -204,7 +211,7 @@ class Server {
               close( sd );
               client_socket[i] = 0;
               int newIndex = 0;
-              int* newRoutes = new int[3];
+              int* newRoutes = new int[max_clients];
               for (int moveRoute = 0; moveRoute < numRoutes; moveRoute++) {
                 if (moveRoute == i) {
                   continue;
@@ -231,9 +238,9 @@ class Server {
 class Client {
 public:
   char* myIP;
-  int* sendSockets = new int[2];
-  int* recSockets = new int[2];
-  sockaddr_in* neighborRoutes = new sockaddr_in[2];
+  int* sendSockets;
+  int* recSockets;
+  sockaddr_in* neighborRoutes;
   int myPort;
   int sock = 4;
   int valread;
@@ -245,17 +252,24 @@ public:
   int currSocket;
   int numNeighbors = 0;
   Hashmap *store;
+  size_t num_nodes;
 
-  Client(char* ip, int port, Hashmap *store_) {
+  Client(char* ip, int port, Hashmap *store_, size_t num_nodes_ ) {
+    std::cout << "Client constructor starting \n";
     if (store_ == nullptr) {
       std::cout << "enter a valid hashmap pointer \n";
       exit(1);
     }
+    num_nodes = num_nodes_;
     myIP = ip;
     myPort = port;
     store = store_;
+    sendSockets = new int[num_nodes];
+    recSockets = new int[num_nodes];
+    neighborRoutes = new sockaddr_in[num_nodes];
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(port);
+      std::cout << "Client all variables set \n";
     if(inet_pton(AF_INET, myIP, &my_addr.sin_addr) <= 0) {
       printf("\nInvalid address/ Address not supported \n");
   		exit(1);
@@ -340,7 +354,7 @@ public:
     strcat(header, thisportchar);
     send(sock, header, strlen(header), 0);
     std::cout << "Sending to server my info: " << header << "\n";
-
+/*
     if((valread = read( sock , buffer, 2048) > 0)) {
       printf("Got information from Server: %s\n", buffer);
       struct sockaddr_in neighbor;
@@ -386,6 +400,31 @@ public:
       neighborRoutes[numNeighbors] = neighbor;
       numNeighbors++;
       memset(buffer, 0, 2048);
+    }
+*/
+    for (int k = 0; k < num_nodes - 1; k++) {
+      if((valread = read( sock , buffer, 2048) > 0)) {
+        printf("Got information from Server: %s\n", buffer);
+        struct sockaddr_in neighbor;
+        neighbor.sin_family = AF_INET;
+        char charIP[10];
+        memcpy(charIP, &buffer[3],9);
+        charIP[10] = '\0';
+        char charPort[5];
+        memcpy(charPort, &buffer[15],4);
+        charPort[4] = '\0';
+        char* pEnd;
+        int nPort = strtol(charPort, &pEnd, 10);
+        neighbor.sin_port = htons(nPort);
+        std::cout << "n2 IP is " << charIP << " and port is " << nPort << "\n";
+        if(inet_pton(AF_INET, charIP, &neighbor.sin_addr)<=0) {
+      		printf("\nInvalid address/ Address not supported \n");
+      		exit(1);
+      	}
+        neighborRoutes[numNeighbors] = neighbor;
+        numNeighbors++;
+        memset(buffer, 0, 2048);
+      }
     }
 
   }
@@ -475,6 +514,7 @@ public:
         for (int k = 0; k < numNeighbors; k++) {
           int sd = recSockets[k];
           if (FD_ISSET(sd, &fdread)) {
+            memset(buffer, 0, 2048);
             int ret = recv(sd, (char *)buffer, sizeof(buffer), 0);
             if(ret > 0) {
                 printf("Message received from socket %d : %s \n", sd, buffer);

@@ -18,8 +18,8 @@
 #include "../network/map.h"
 #include "../network/network.h"
 #include "../network/KVStore.h"
-#include "../wordCounter/SIMap.h"
-#include "../wordCounter/wordCounter.h"
+// #include "../wordCounter/SIMap.h"
+// #include "../wordCounter/wordCounter.h"
 
 // class KVStore;
 // class Key;
@@ -473,18 +473,18 @@ class DataFrame : public Object {
     return fromArray(key, kv, 1, vals);
   }
 
-  DataFrame* fromVisitor(Key* key, KVStore *kv, const char* colType, Writer *vals) {
-    size_t numCols = strlen(colType);
-    Schema *s = new Schema(colType);
-    DataFrame *df = new DataFrame(s);
-    Row *r = new Row(s);
-    while (!vals->done()) {
-      vals->visit(r);
-      df->add_row(r);
-    }
-    kv->put(key, df);
-    return df;
-  }
+  // DataFrame* fromVisitor(Key* key, KVStore *kv, const char* colType, Writer *vals) {
+  //   size_t numCols = strlen(colType);
+  //   Schema *s = new Schema(colType);
+  //   DataFrame *df = new DataFrame(*s);
+  //   Row *r = new Row(*s);
+  //   while (!vals->done()) {
+  //     vals->visit(*r);
+  //     df->add_row(*r);
+  //   }
+  //   kv->put(key, df);
+  //   return df;
+  // }
 };
 
 
@@ -539,8 +539,9 @@ void KVStore::put(Key *k, DataFrame *v) {
   strcat(chunkStoreKey, k->key);
   strcat(chunkStoreKey, "_DONE");
   Value *dataValFinal = new Value(colType);
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < num_nodes; i++) {
     Key *chunkKeyFinal = new Key(chunkStoreKey, i);
+    usleep(10000);
     store->sendInfo(chunkKeyFinal, dataValFinal);
   }
 }
@@ -600,12 +601,16 @@ DataFrame* KVStore::waitAndGet(Key *k) {
   strcat(colKeyChar, k->key);
   strcat(colKeyChar, "_DONE");
   Key *chunkKey = new Key(colKeyChar, k->nodeIndex);
+  std::cout << "BEFORE WAITING FOR END KEY " << colKeyChar << " \n";
   store->waitForKey(chunkKey);
+  std::cout << "AFTER WAITING FOR END KEY \n";
 
   Schema *colS = new Schema();
   DataFrame *retDf = new DataFrame(*colS);
 
+  std::cout << "BEFORE waitAndGet " << k->key << " \n";
   DataFrame *metaDF = store->waitAndGet(k);
+  std::cout << "After waitAndGet" << k->key << " \n";
   String *colTypes = metaDF->get_string(0,0);
 
   char type;
@@ -639,11 +644,11 @@ DataFrame* KVStore::waitAndGet(Key *k) {
 
 void ChunkStore::put(Key *k, DataFrame *v) {
   Column* col = v->column[0];
-  std::cout << "inside CS put col has type " << v->column[0]->get_type() << "\n";
+  // std::cout << "inside CS put col has type " << v->column[0]->get_type() << "\n";
   char* data = col->serializeMetadata();
   char* val;
   for (int i = 0; i < col->getNumChunks(); i++) {
-    int storeClientLocation = i % 3;
+    int storeClientLocation = i % num_nodes;
     Key *chunkKey = getChunkKey(k, storeClientLocation, i);
     if (col->get_type() == 'I') {
       val = col->as_int()->serializeChunk(i);
@@ -667,7 +672,7 @@ void ChunkStore::put(Key *k, DataFrame *v) {
   char *finalVal = new char[2];
   finalVal[0] = col->get_type();
   Value *dataValFinal = new Value(finalVal);
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < num_nodes; i++) {
     Key *chunkKeyFinal = new Key(chunkStoreKey, i);
     sendInfo(chunkKeyFinal, dataValFinal);
   }
@@ -818,7 +823,7 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
 
 Value* ChunkStore::getChunkVal(size_t chunkNum, Key *chunkKey) {
   Value *chunkData;
-  size_t whichNode = chunkNum % 3;
+  size_t whichNode = chunkNum % num_nodes;
   if (nodeIndex == whichNode) {
     waitForKey(chunkKey);
     chunkData = dynamic_cast<Value*>(store->get(chunkKey));
@@ -842,5 +847,9 @@ Value* ChunkStore::getChunkVal(size_t chunkNum, Key *chunkKey) {
 void ChunkStore::waitForKey(Key* k) {
   while (!store->keyExists(k)) {
     usleep(500000);
+
+    std::cout << "WAITING FOR KEY " << k->key <<" --------- \n";
+    store->printall();
+    std::cout << "---------- --------- \n";
   }
 }

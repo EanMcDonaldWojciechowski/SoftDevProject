@@ -89,6 +89,7 @@ class Column : public Object {
     Sys *sys = new Sys();
     // add meta data for frist chunk
     char* data = new char[1024];
+    memset(data, 0, 1025);
     data[1023] = '\0';
     char chunkNum[1024];
     snprintf(chunkNum, sizeof(getNumChunks()), "%d", getNumChunks());
@@ -262,6 +263,7 @@ class BoolColumn : public Column {
       exit(1);
     }
     char* data = new char[1024];
+    memset(data, 0, 1025);
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       if (idx * sizeOfChunk + i >= count_) {
@@ -279,6 +281,7 @@ class BoolColumn : public Column {
   // deserialize chunk data
   virtual void deserializeChunk(char* data) {
     char* keyChar = new char[256];
+    memset(keyChar, 0, 256);
     bool val;
     for (int i = 0; i < strlen(data); i++) {
       if (data[i] == '}') {
@@ -450,6 +453,7 @@ class FloatColumn : public Column {
       exit(1);
     }
     char* data = new char[1024];
+    memset(data, 0, 1025);
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       if (idx * sizeOfChunk + i >= count_) {
@@ -466,6 +470,7 @@ class FloatColumn : public Column {
   // deserialize chunk data
   virtual void deserializeChunk(char* data) {
     char* keyChar = new char[256];
+    memset(keyChar, 0, 256);
     float val;
     for (int i = 0; i < strlen(data); i++) {
 
@@ -648,6 +653,7 @@ class IntColumn : public Column {
       exit(1);
     }
     char* data = new char[1024];
+    memset(data, 0, 1025);
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       if (idx * sizeOfChunk + i >= count_) {
@@ -664,6 +670,7 @@ class IntColumn : public Column {
   // deserialize chunk data
   virtual void deserializeChunk(char* data) {
     char* keyChar = new char[256];
+    memset(keyChar, 0, 256);
     int val;
     for (int i = 0; i < strlen(data); i++) {
       if (data[i] == '}') {
@@ -810,6 +817,7 @@ class StringColumn : public Column {
       exit(1);
     }
     char* data = new char[1024];
+    memset(data, 0, 1025);
     data[1023] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       if (idx * sizeOfChunk + i >= count_) {
@@ -828,6 +836,7 @@ class StringColumn : public Column {
   // deserialize chunk data
   virtual void deserializeChunk(char* data) {
     char* keyChar = new char[256];
+    memset(keyChar, 0, 256);
     String* val;
     for (int i = 0; i < strlen(data); i++) {
       if (data[i] == '}') {

@@ -1,28 +1,6 @@
 #pragma once
 #include <assert.h>
 
-/*************************************************************************
- * Key::
- * Stores values by key
- */
-class Writer : public Rower {
- public:
-
-   Writer() {
-
-   }
-
-   ~Writer() {
-
-   }
-
-   void visit(Row & r);
-
-   bool done() {return 0;}
-
-};
-
-
 /**
  * Represents an array data structure in CwC.
  */
@@ -74,18 +52,18 @@ public:
 		if (castedOToArray == nullptr) {
 			return false;
 		}
-		if (this->length() != castedOToArray->length()) {
+		if (this->size() != castedOToArray->size()) {
 			return false;
 		}
 		for (int i = 0; i < count_; i++) {
-			if (!(elements[i]->equals(castedOToArray->get(i)))) {
+			if (!(elements[i]->equals(castedOToArray->get_(i)))) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	Object* get(size_t index) // Returns the element at index
+	Object* get_(size_t index) // Returns the element at index
 	{
 		assert(index < size_ && index >= 0);
 		return elements[index];
@@ -100,7 +78,7 @@ public:
 		return totalHash;
 	}
 
-	Object* set(size_t i, Object* e) // Replaces the element at i with e.
+	Object* put(size_t i, Object* e) // Replaces the element at i with e.
 	{
 		assert(i <= count_);
 		Object *retValue = nullptr;
@@ -115,7 +93,7 @@ public:
 		return retValue;
 	}
 
-	size_t length() // Return the number of elements in the collection.
+	size_t size() // Return the number of elements in the collection.
 	{
 		return count_;
 	}
@@ -133,7 +111,8 @@ public:
 				char *item = new char(1);
 				item[0] = '\0';
 				strcat(item, "'");
-				strcat(item, castedElemnetIToString->getStrValue());
+				// strcat(item, castedElemnetIToString->getStrValue()); // using differnet function name
+        strcat(item, castedElemnetIToString->c_str());
 				strcat(item, "'");
 				strcat(retValue, item);
 				//delete[] item;
@@ -145,6 +124,23 @@ public:
 		strcat(retValue, "}");
 		return retValue;
 	}
+
+  // Removes the element at a certain index
+  void erase_(int idx) {
+    Object **copy = new Object*[size_ + 1];
+    int i;
+    for (i = 0; i < idx; i++) {
+        copy[i] = elements[i];
+    }
+    for (int j = idx + 1; j < size_; j++) {
+      copy[i] = elements[j];
+      i++;
+    }
+
+		size_--;
+		delete[] elements;
+		elements = copy;
+  }
 };
 
 /**  Item_ are entries in a Map, they are not exposed, are immutable, own
@@ -183,6 +179,9 @@ public:
           }
       // The keys are owned, but the key is received as a reference, i.e. not owned so we must make a copy of it.
       keys_.push_back(k.clone());
+      // String key = static_cast<String>(k);
+      // String *copy = new String(key.c_str());
+      // keys_.push_back(copy);
       vals_.push_back(v);
       return 1;
   }
@@ -266,10 +265,11 @@ public:
 
 class MutableString : public String {
 public:
-  MutableString() : String("", 0) {}
+  // MutableString() : String("", 0) {}
+  MutableString() : String("") {}
   void become(const char* v) {
     size_ = strlen(v);
-    cstr_ = (char*) v;
+    str_ = (char*) v;
     hash_ = hash_me();
   }
 };

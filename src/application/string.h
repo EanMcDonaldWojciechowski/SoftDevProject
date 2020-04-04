@@ -82,4 +82,9 @@ class String: public Object {
             }
             return hash;
         }
+
+        virtual Object* clone() {
+          String *newStr = new String(str_);
+          return newStr;
+        }
 };
