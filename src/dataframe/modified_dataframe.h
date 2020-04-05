@@ -4,8 +4,8 @@
 #include <iostream>
 #include <string.h>
 #include "helper.h"
-#include "../application/object.h"
-#include "../application/string.h"
+#include "object.h"
+#include "string.h"
 #include "../application/column.h"
 #include "schema.h"
 #include "fielder.h"

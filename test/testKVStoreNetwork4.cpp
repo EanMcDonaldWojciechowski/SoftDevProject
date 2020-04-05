@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
   // df->add_column(vals);
   // df->print();
 
-  KVStore *kv = new KVStore(nodeIndex, 5);
+  KVStore *kv = new KVStore(nodeIndex, 4);
   Key *k = new Key("main", 0);
   // sleep(5);
   // kv->put(k, df);

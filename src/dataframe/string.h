@@ -11,77 +11,84 @@
  * work by copy, but there are exceptions (this is mostly to support
  * large strings and avoid them being copied).
  *  author: vitekj@me.com */
-class String : public Object {
-public:
-    size_t size_; // number of characters excluding terminate (\0)
-    char *cstr_;  // owned; char array
+ class String: public Object {
+   public:
+       char *str_;
+       size_t size_;
 
-    /** Build a string from a string constant */
-    String(char const* cstr, size_t len) {
-       size_ = len;
-       cstr_ = new char[size_ + 1];
-       memcpy(cstr_, cstr, size_ + 1);
-       cstr_[size_] = 0; // terminate
-    }
-    /** Builds a string from a char*, steal must be true, we do not copy!
-     *  cstr must be allocated for len+1 and must be zero terminated. */
-    String(bool steal, char* cstr, size_t len) {
-        assert(steal && cstr[len]==0);
-        size_ = len;
-        cstr_ = cstr;
-    }
+       String(const char* str) {
+           size_ = strlen(str);
 
-    String(char const* cstr) : String(cstr, strlen(cstr)) {}
+           str_ = new char[size_ + 1];
+           strcpy(str_, str);
+       }
 
-    /** Build a string from another String */
-    String(String & from):
-        Object(from) {
-        size_ = from.size_;
-        cstr_ = new char[size_ + 1]; // ensure that we copy the terminator
-        memcpy(cstr_, from.cstr_, size_ + 1);
-    }
+       ~String() {
+           delete[] str_;
+       }
 
-    /** Delete the string */
-    ~String() { delete[] cstr_; }
-    
-    /** Return the number characters in the string (does not count the terminator) */
-    size_t size() { return size_; }
-    
-    /** Return the raw char*. The result should not be modified or freed. */
-    char* c_str() {  return cstr_; }
-    
-    /** Returns the character at index */
-    char at(size_t index) {
-        assert(index < size_);
-        return cstr_[index];
-    }
-    
-    /** Compare two strings. */
-    bool equals(Object* other) {
-        if (other == this) return true;
-        String* x = dynamic_cast<String *>(other);
-        if (x == nullptr) return false;
-        if (size_ != x->size_) return false;
-        return strncmp(cstr_, x->cstr_, size_) == 0;
-    }
-    
-    /** Deep copy of this string */
-    String * clone() { return new String(*this); }
+       size_t length() {
+           return size_;
+       }
 
-    /** This consumes cstr_, the String must be deleted next */
-    char * steal() {
-        char *res = cstr_;
-        cstr_ = nullptr;
-        return res;
-    }
+       bool equals(Object *other) {
+           if (this == other) {
+               return true;
+           }
 
-    /** Compute a hash for this string. */
-    size_t hash_me() {
-        size_t hash = 0;
-        for (size_t i = 0; i < size_; ++i)
-            hash = cstr_[i] + (hash << 6) + (hash << 16) - hash;
-        return hash;
-    }
+           String *other1 = dynamic_cast<String *>(other);
+           if (other1 == nullptr) {
+               return false;
+           }
+           return !strcmp(this->str_, other1->str_); // strcmp returns 0 if equal
+       }
+
+       // returns a new concatenated string: this + o
+       virtual String* concat(String *o) {
+           char *t = new char[size_ + o->length()];
+           strcpy(t, str_);
+           strcat(t, o->str_);
+           String *out = new String(t);
+           delete[] t;
+           return out;
+       }
+
+       virtual void print_info() {
+           printf("string: %s, size: %lu\n", str_, size_);
+       }
+
+       virtual void print() {
+           printf("%s", str_);
+       }
+
+       /** Returns 0 if strings are equal, >0 if this string is larger,
+        *  <0 otherwise */
+       // From Professor Vitek
+       virtual int compare(String* tgt) {
+           return strcmp(str_, tgt->str_);
+       }
+
+       virtual char* get() {
+           return str_;
+       }
+
+       virtual char* c_str() {
+           return str_;
+       }
+
+       // From Professor Vitek
+       size_t hash_me_() {
+           size_t hash = 0;
+           for (size_t i = 0; i < size_; ++i) {
+               hash = str_[i] + (hash << 6) + (hash << 16) - hash;
+           }
+           return hash;
+       }
+
+       virtual Object* clone() {
+         String *newStr = new String(str_);
+         return newStr;
+       }
  };
 
 /** A string buffer builds a string from various pieces.
@@ -99,7 +106,7 @@ public:
     void grow_by_(size_t step) {
         if (step + size_ < capacity_) return;
         capacity_ *= 2;
-        if (step + size_ >= capacity_) capacity_ += step;        
+        if (step + size_ >= capacity_) capacity_ += step;
         char* oldV = val_;
         val_ = new char[capacity_];
         memcpy(val_, oldV, size_);
@@ -119,7 +126,7 @@ public:
         assert(val_ != nullptr); // can be called only once
         grow_by_(1);     // ensure space for terminator
         val_[size_] = 0; // terminate
-        String *res = new String(true, val_, size_);
+        String *res = new String(val_);
         val_ = nullptr; // val_ was consumed above
         return res;
     }
