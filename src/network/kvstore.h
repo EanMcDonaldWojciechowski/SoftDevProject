@@ -50,6 +50,7 @@ public:
 
   void sendInfo(Key *chunkKey, Value *val) {
     if (chunkKey->nodeIndex == nodeIndex) {
+      std::cout << "Storing locally: " << val->value << "\n";
       store->put(chunkKey, val);
     } else {
       client->sendMessage(basePort + chunkKey->nodeIndex, val->dataToSend(chunkKey));

@@ -12,6 +12,7 @@ class Rower : public Object {
       call. The return value is used in filters to indicate that a row
       should be kept. */
   virtual bool accept(Row& r) {return 0;}
+  virtual bool visit(Row& r) {return 0;}
 
   /** Once traversal of the data frame is complete the rowers that were
       split off will be joined.  There will be one join per split. The

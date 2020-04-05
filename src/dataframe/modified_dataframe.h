@@ -5,6 +5,7 @@
 #include <string.h>
 #include "helper.h"
 #include "object.h"
+#include "../network/map.h"
 #include "string.h"
 #include "../application/column.h"
 #include "schema.h"
@@ -15,11 +16,10 @@
 #include "printRower.h"
 #include "RowerAddTwoToInts.h"
 #include <thread>
-#include "../network/map.h"
 #include "../network/network.h"
 #include "../network/KVStore.h"
-// #include "../wordCounter/SIMap.h"
-// #include "../wordCounter/wordCounter.h"
+#include "../wordCounter/SIMap.h"
+#include "../wordCounter/wordCounter.h"
 
 // class KVStore;
 // class Key;
@@ -473,18 +473,25 @@ class DataFrame : public Object {
     return fromArray(key, kv, 1, vals);
   }
 
-  // DataFrame* fromVisitor(Key* key, KVStore *kv, const char* colType, Writer *vals) {
-  //   size_t numCols = strlen(colType);
-  //   Schema *s = new Schema(colType);
-  //   DataFrame *df = new DataFrame(*s);
-  //   Row *r = new Row(*s);
-  //   while (!vals->done()) {
-  //     vals->visit(*r);
-  //     df->add_row(*r);
-  //   }
-  //   kv->put(key, df);
-  //   return df;
-  // }
+  DataFrame* fromVisitor(Key* key, KVStore *kv, const char* colType, Writer *vals) {
+    size_t numCols = strlen(colType);
+    Schema *s = new Schema(colType);
+    DataFrame *df = new DataFrame(*s);
+    Row *r = new Row(*s);
+    std::cout<<"DF in from Visitor Entering while loop: " << " Done ? " << vals->done() << "\n";
+
+    while (!vals->done()) {
+      std::cout<<"DF in from Visitor IN while loop\n";
+      vals->visit(*r);
+      std::cout << "Row after visit \n";
+      r->printRow();
+      df->add_row(*r);
+      std::cout<<"DF in from Visitor IN while loop3\n";
+    }
+    std::cout<<"DF in from Visitor DONE while loop\n";
+    kv->put(key, df);
+    return df;
+  }
 };
 
 
@@ -852,4 +859,49 @@ void ChunkStore::waitForKey(Key* k) {
     store->printall();
     std::cout << "---------- --------- \n";
   }
+}
+
+
+void WordCount::local_count() {
+  DataFrame* words = (kv->get(in));
+  // DataFrame* words = (kv.waitAndGet(in)); // We need to local implementation
+  // p("Node ").p(nodeIndex).pln(": starting local count...");
+  // words->print();
+  std::cout << "Node " << nodeIndex << ": starting local count...\n";
+  SIMap map;
+  Adder add(map);
+  words->map(add);
+  // words->local_map(add); // df doesn't know about networking so it is just working with local data
+  delete words;
+  Summer* cnt = new Summer(map);
+  char* colType = new char[3];
+  strcat(colType, "SI");
+  Schema *s = new Schema();
+  DataFrame *df = new DataFrame(*s);
+  DataFrame *retDf = df->fromVisitor(mk_key(nodeIndex), kv, colType, cnt);
+  delete retDf;
+}
+
+void WordCount::run_() {
+  std::cout << "DF Beginning run \n";
+  if (nodeIndex == 0) {
+    FileReader *fr = new FileReader(arg);
+    std::cout << "DF inside run after file reading \n";
+    char* colType = new char[3];
+    strcat(colType, "S");
+    Schema *s = new Schema();
+    DataFrame *df = new DataFrame(*s);
+    std::cout<<"DF creating fromVisitor\n";
+    DataFrame *retDf = df->fromVisitor(in, kv, colType, fr);
+    std::cout<<"DF done with fromVisitor\n";
+    delete retDf;
+  }
+  local_count();
+  reduce();
+}
+
+void WordCount::merge(DataFrame* df, SIMap& m) {
+  Adder add(m);
+  df->map(add);
+  delete df;
 }

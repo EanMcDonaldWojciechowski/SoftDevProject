@@ -50,6 +50,8 @@
        }
        return (strcmp(this->key, castedO->key) == 0);
     }
+
+    size_t home() {return nodeIndex;}
  };
 
 /*************************************************************************

@@ -95,13 +95,13 @@ class Row : public Object {
   void printRow() {
     for (int i = 0; i < schema->width(); i++) {
       if (schema->col_type(i) == 'I') {
-        // std:: cout << "int val in row: " << cols[i]->as_int()->get(i) << "\n";
+        std:: cout << "int val in row: " << cols[i]->as_int()->get(i) << "\n";
       } else if (schema->col_type(i) == 'B') {
-        // std:: cout << "bool val in row: " << cols[i]->as_bool()->get(i) << "\n";
+        std:: cout << "bool val in row: " << cols[i]->as_bool()->get(i) << "\n";
       } else if (schema->col_type(i) == 'F') {
-        // std:: cout << "float val in row: " << cols[i]->as_float()->get(i) << "\n";
+        std:: cout << "float val in row: " << cols[i]->as_float()->get(i) << "\n";
       } else if (schema->col_type(i) == 'S') {
-        // std:: cout << "String val in row: " << cols[i]->as_string()->get(i) << "\n";
+        std:: cout << "String val in row: " << cols[i]->as_string()->get(i)->c_str() << "\n";
       }
     }
   }
