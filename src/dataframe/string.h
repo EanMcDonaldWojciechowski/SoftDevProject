@@ -112,30 +112,51 @@ public:
   }
 
   StrBuff(Key* key) {
-    val_ = key->key;
     size_ = strlen(key->key);
+    val_ = new char[capacity_ = size_];
+    val_ = key->key;
   }
 
   void grow_by_(size_t step) {
+      if (val_ == nullptr) {
+        val_ = new char[step + 1];
+        return;
+      }
       if (step + size_ < capacity_) return;
       capacity_ *= 2;
       if (step + size_ >= capacity_) capacity_ += step;
       char* oldV = val_;
       val_ = new char[capacity_];
-      memcpy(val_, oldV, size_);
-      delete[] oldV;
+      strcpy(val_, oldV);
+      //delete[] oldV;
+
   }
   StrBuff& c(const char* str) {
       size_t step = strlen(str);
+      std::cout << "before grow by \n";
       grow_by_(step);
-      memcpy(val_+size_, str, step);
+      std::cout << "after grow by \n";
+      std::cout << " str: " << str << " step: " << step <<" \n";
+      strcpy(val_, str);
+      //memcpy(val_+size_, str, step);
+      std::cout << "after memcopy \n";
       size_ += step;
       return *this;
   }
   StrBuff& c(String &s) { return c(s.c_str());  }
-  StrBuff& c(size_t v) { return c(std::to_string(v).c_str());  } // Cpp
+  StrBuff& c(size_t v) {
+    return c(std::to_string(v).c_str());
+  } // Cpp
+
+  void printBuf() {
+    std::cout << "print buff" << (val_ == nullptr) << "\n";
+    for (int i = 0; i < capacity_; i++) {
+      std::cout << "val[" << i << "]: " << val_[i] << "\n";
+    }
+  }
 
   String* get() {
+      std::cout << "Insude get str \n";
       assert(val_ != nullptr); // can be called only once
       grow_by_(1);     // ensure space for terminator
       val_[size_] = 0; // terminate

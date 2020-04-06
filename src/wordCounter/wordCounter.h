@@ -49,7 +49,10 @@ class KeyBuff : public Object {
   ~KeyBuff() {}
 
   KeyBuff& c(String &s) { buf_.c(s); return *this;  }
-  KeyBuff& c(size_t v) { buf_.c(v); return *this; }
+  KeyBuff& c(size_t v) {
+    buf_.c(v);
+    return *this;
+  }
   KeyBuff& c(const char* v) { buf_.c(v); return *this; }
 
   Key* get() {
@@ -186,7 +189,9 @@ class Adder : public Reader {
 public:
   SIMap& map_;  // String to Num map;  Num holds an int
 
-  Adder(SIMap& map) : map_(map)  {}
+  Adder(SIMap& map) : map_(map)  {
+    std::cout << "map add " << &map_ << "\n";
+  }
 
   ~Adder() {
 
@@ -199,6 +204,8 @@ public:
     assert(num != nullptr);
     num->v++;
     map_.set(*word, num);
+
+    std::cout << "map size " << map_.size_ << "\n";
     return false;
   }
 };
@@ -211,7 +218,10 @@ public:
   size_t j = 0;
   size_t seen = 0;
 
-  Summer(SIMap& map) : map_(map) {}
+  Summer(SIMap& map) : map_(map) {
+    std::cout << "=============================\n";
+    std::cout << &map << "\n";
+  }
 
   ~Summer() {
 
@@ -243,17 +253,26 @@ public:
   }
 
   virtual bool visit(Row& r) {
+      String *s = new String("five");
+      std::cout << "checking for key \n";
+      std::cout << s->c_str() << ": " << map_.get(*s) << "\n";
       if (!k()) next();
       // String & key = *k();
       String* key = k();
       size_t value = v();
+
+      std::cout << "iside summer before set \n";
       r.set(0, key);
       r.set(1, (int) value);
+      std::cout << "iside summer after set \n";
       next();
       return 1;
   }
 
-  virtual bool done() {return seen == map_.size(); }
+  virtual bool done() {
+    std::cout << "seen and map size : " << seen << " " << map_.size() << "\n";
+    return seen == map_.size();
+  }
 };
 
 class Application : public Object {
@@ -332,7 +351,6 @@ public:
   Key* mk_key(size_t idx) {
       Key * k = kbuf->c(idx).get();
       // LOG("Created key " << k->c_str());
-      std::cout << "Created key " << k->key << "\n";
       return k;
   }
 

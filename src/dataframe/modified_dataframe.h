@@ -251,6 +251,7 @@ class DataFrame : public Object {
     for (int j = 0; j < scm->length(); j++) {
       this->fill_row(j, *currRow);
       r.accept(*currRow);
+      r.visit(*currRow);
       retDF->add_row(*currRow);
     }
     delete scm;
@@ -484,7 +485,7 @@ class DataFrame : public Object {
       std::cout<<"DF in from Visitor IN while loop\n";
       vals->visit(*r);
       std::cout << "Row after visit \n";
-      r->printRow();
+      std::cout << "row value after visit: " << r->get_string(0)->c_str() <<  " : "  << colType <<  "\n";
       df->add_row(*r);
       std::cout<<"DF in from Visitor IN while loop3\n";
     }
@@ -863,22 +864,33 @@ void ChunkStore::waitForKey(Key* k) {
 
 
 void WordCount::local_count() {
+  sleep(3);
   DataFrame* words = (kv->get(in));
   // DataFrame* words = (kv.waitAndGet(in)); // We need to local implementation
   // p("Node ").p(nodeIndex).pln(": starting local count...");
-  // words->print();
   std::cout << "Node " << nodeIndex << ": starting local count...\n";
   SIMap map;
-  Adder add(map);
-  words->map(add);
+  //SIMap *map = new SIMap();
+  std::cout << "map addy " << &map << "\n";
+  Adder *add = new Adder(map);
+  words->map(*add);
   // words->local_map(add); // df doesn't know about networking so it is just working with local data
-  delete words;
+  //delete words;
+
+  sleep(3);
   Summer* cnt = new Summer(map);
   char* colType = new char[3];
   strcat(colType, "SI");
   Schema *s = new Schema();
   DataFrame *df = new DataFrame(*s);
+  std::cout << "before from visit with summer \n";
   DataFrame *retDf = df->fromVisitor(mk_key(nodeIndex), kv, colType, cnt);
+  std::cout << "after from visit with summer \n";
+
+  std::cout << "local count df -------------- \n";
+  std::cout << df->nrows() << "\n";
+  df->print();
+  std::cout << "local count df -------------- \n";
   delete retDf;
 }
 
@@ -897,7 +909,7 @@ void WordCount::run_() {
     delete retDf;
   }
   local_count();
-  reduce();
+  //reduce();
 }
 
 void WordCount::merge(DataFrame* df, SIMap& m) {

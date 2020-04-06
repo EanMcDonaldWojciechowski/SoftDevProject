@@ -208,6 +208,7 @@ public:
 
   Map() : Map(10) {}
   Map(size_t cap) {
+		std::cout << "map cap constructer \n";
     capacity_ = cap;
     items_ = new Items_[capacity_];
   }
@@ -230,6 +231,7 @@ public:
   /** Add item->val_ at item->key_ either by updating an existing Item_ or
    * creating a new one if not found.  */
   void set(Object &k, Object *v) {
+
     if (size_ >= capacity_)
         grow();
     size_ += items_[off_(k)].set_(k,v);
@@ -289,5 +291,13 @@ class SIMap : public Map {
 public:
   SIMap () {}
   Num* get(String& key) { return dynamic_cast<Num*>(get_(key)); }
-  void set(String& k, Num* v) { assert(v); Map::set(k, v); }
+  void set(String& k, Num* v) {
+		std::cout << "setting in map str: " << k.c_str() << " num: " << v->v << "\n";
+		assert(v);
+		Map::set(k, v);
+	}
+
+	void printall() {
+		std::cout << items_->keys_.to_string() << "\n";
+	}
 }; // KVMap
