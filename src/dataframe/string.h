@@ -127,20 +127,19 @@ public:
       if (step + size_ >= capacity_) capacity_ += step;
       char* oldV = val_;
       val_ = new char[capacity_];
-      strcpy(val_, oldV);
+      memcpy(val_, oldV, size_);
+      //strcpy(val_, oldV);
       //delete[] oldV;
 
   }
   StrBuff& c(const char* str) {
       size_t step = strlen(str);
-      std::cout << "before grow by \n";
       grow_by_(step);
-      std::cout << "after grow by \n";
-      std::cout << " str: " << str << " step: " << step <<" \n";
-      strcpy(val_, str);
-      //memcpy(val_+size_, str, step);
-      std::cout << "after memcopy \n";
+      //strcpy(val_, str);
+      memcpy(val_+size_, str, step);
       size_ += step;
+      printBuf();
+
       return *this;
   }
   StrBuff& c(String &s) { return c(s.c_str());  }
@@ -150,18 +149,19 @@ public:
 
   void printBuf() {
     std::cout << "print buff" << (val_ == nullptr) << "\n";
-    for (int i = 0; i < capacity_; i++) {
+    for (int i = 0; i < size_; i++) {
       std::cout << "val[" << i << "]: " << val_[i] << "\n";
     }
   }
 
   String* get() {
-      std::cout << "Insude get str \n";
+      // std::cout << "Insude get str \n";
       assert(val_ != nullptr); // can be called only once
       grow_by_(1);     // ensure space for terminator
       val_[size_] = 0; // terminate
       String *res = new String(val_);
       val_ = nullptr; // val_ was consumed above
+      size_ = 0;
       return res;
   }
 };

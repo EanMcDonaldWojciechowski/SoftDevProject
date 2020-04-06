@@ -104,6 +104,7 @@ class Schema : public Object {
   char col_type(size_t idx) {
     // // std::cout  << "\n" << colType[idx] << "<-- in scm calltype\n";
     if (idx >= rowSize_) {
+      std::cout << "EXITING : rS " << rowSize_ << " greater than idx " << idx << "\n";
       exit(1);
     } else {
       return colType[idx];

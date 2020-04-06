@@ -479,18 +479,24 @@ class DataFrame : public Object {
     Schema *s = new Schema(colType);
     DataFrame *df = new DataFrame(*s);
     Row *r = new Row(*s);
-    std::cout<<"DF in from Visitor Entering while loop: " << " Done ? " << vals->done() << "\n";
+    std::cout<<"DF in from Visitor Entering while loop: " << " Done ? " << vals->done() << " with colType " <<  colType <<" \n";
 
     while (!vals->done()) {
       std::cout<<"DF in from Visitor IN while loop\n";
       vals->visit(*r);
       std::cout << "Row after visit \n";
-      std::cout << "row value after visit: " << r->get_string(0)->c_str() <<  " : "  << colType <<  "\n";
+      if (s->rowSize_ > 1) {
+        std::cout << "ROW value after visit: " << r->get_string(0)->c_str() << " : " << r->get_int(1) << "\n";
+      }
       df->add_row(*r);
       std::cout<<"DF in from Visitor IN while loop3\n";
     }
-    std::cout<<"DF in from Visitor DONE while loop\n";
+    std::cout<<"df in from visitor \n";
+    df->print();
+
     kv->put(key, df);
+    std::cout<<"df in from visitor AFTER PUT\n";
+    df->print();
     return df;
   }
 };
@@ -566,7 +572,7 @@ DataFrame* KVStore::get(Key *k) {
   strcat(colKeyChar, k->key);
   strcat(colKeyChar, "_DONE");
   Key *chunkKey = new Key(colKeyChar, nodeIndex);
-  // std::cout<<"Looking for key " << colKeyChar << " with nodeidx " << nodeIndex << "\n";
+  std::cout<<"Looking for key " << colKeyChar << " with nodeidx " << nodeIndex << "\n";
   store->waitForKey(chunkKey);
   // std::cout<<"FOUND KEY MOVING ON \n";
   Schema *colS = new Schema();
@@ -711,11 +717,38 @@ DataFrame* ChunkStore::get(Key *k) {
   strcat(chunkStoreKey, nodeIdxChar);
   strcat(chunkStoreKey, "_");
   Key *parentKey = new Key(chunkStoreKey, k->nodeIndex);
+  char* firstChunkStoreKey = new char[1024];
+  strcat(firstChunkStoreKey, chunkStoreKey);
+  strcat(firstChunkStoreKey, "0");
   Key** subKeys = store->getSubKeys(parentKey);
   size_t i = 0;
   Value *chunkVal;
   while (subKeys[i] != nullptr) {
     chunkVal = dynamic_cast<Value*>(store->get(subKeys[i]));
+    std::cout << "Looking for key: " << subKeys[i]->key << "\n";
+
+    std::cout << "Print i " << i << "\n";
+    std::cout << "firstChunkStoreKey is " << firstChunkStoreKey << "\n";
+    if (strcmp(subKeys[i]->key, firstChunkStoreKey) == 0) {
+      std::cout << "Print ChunkVal 0 before taking off metadata: " << chunkVal->value << "\n";
+      size_t fieldNum = 0;
+      int m;
+      for (m = 0; m < strlen(chunkVal->value); m++) {
+        std::cout << "current char " << chunkVal->value[m] << "\n";
+        std::cout<<"fieldNum : " << fieldNum << "\n";
+        if (chunkVal->value[m] == '}') {
+          fieldNum++;
+        }
+        if (fieldNum == 3) {
+          break;
+        }
+      }
+      char *val = new char[1024];
+      memcpy(val, &chunkVal->value[m + 1], (strlen(chunkVal->value) - m + 1));
+      std::cout << "Print val after taking off metadata: " << val << "\n";
+      chunkVal->value = val;
+    }
+
     if (finalVal->value[0] == 'I') {
       col->as_int()->deserializeChunk(chunkVal->value);
     } else if (finalVal->value[0] == 'B') {
@@ -864,48 +897,53 @@ void ChunkStore::waitForKey(Key* k) {
 
 
 void WordCount::local_count() {
-  sleep(3);
+  sleep(1);
+  std::cout << "before get \n";
   DataFrame* words = (kv->get(in));
+  std::cout << "Printing words: \n";
+  words->print();
+
   // DataFrame* words = (kv.waitAndGet(in)); // We need to local implementation
   // p("Node ").p(nodeIndex).pln(": starting local count...");
-  std::cout << "Node " << nodeIndex << ": starting local count...\n";
+  // std::cout << "Node " << nodeIndex << ": starting local count...\n";
   SIMap map;
   //SIMap *map = new SIMap();
-  std::cout << "map addy " << &map << "\n";
+  std::cout << "map size" << map.size_ << "\n";
   Adder *add = new Adder(map);
   words->map(*add);
   // words->local_map(add); // df doesn't know about networking so it is just working with local data
   //delete words;
+  std::cout << "Printing map \n\n";
+  std::cout << map.items_->keys_->to_string() << "\n\n\n";
+  std::cout << "map size " << map.size_ << "\n";
 
   sleep(3);
-  Summer* cnt = new Summer(map);
+/*  Summer* cnt = new Summer(map);
   char* colType = new char[3];
   strcat(colType, "SI");
   Schema *s = new Schema();
   DataFrame *df = new DataFrame(*s);
   std::cout << "before from visit with summer \n";
+  std::cout << "In local_count doing fromVisitor with key " << mk_key(nodeIndex)->key << "\n";
   DataFrame *retDf = df->fromVisitor(mk_key(nodeIndex), kv, colType, cnt);
-  std::cout << "after from visit with summer \n";
-
   std::cout << "local count df -------------- \n";
-  std::cout << df->nrows() << "\n";
-  df->print();
+  retDf->print();
   std::cout << "local count df -------------- \n";
-  delete retDf;
+  delete retDf;*/
 }
 
 void WordCount::run_() {
-  std::cout << "DF Beginning run \n";
+  // std::cout << "DF Beginning run \n";
   if (nodeIndex == 0) {
     FileReader *fr = new FileReader(arg);
-    std::cout << "DF inside run after file reading \n";
+    // std::cout << "DF inside run after file reading \n";
     char* colType = new char[3];
     strcat(colType, "S");
     Schema *s = new Schema();
     DataFrame *df = new DataFrame(*s);
-    std::cout<<"DF creating fromVisitor\n";
+    // std::cout<<"DF creating fromVisitor\n";
     DataFrame *retDf = df->fromVisitor(in, kv, colType, fr);
-    std::cout<<"DF done with fromVisitor\n";
+    // std::cout<<"DF done with fromVisitor\n";
     delete retDf;
   }
   local_count();

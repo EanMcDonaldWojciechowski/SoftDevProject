@@ -65,7 +65,9 @@ class Row : public Object {
   /** Getters: get the value at the given column. If the column is not
     * of the requested type, the result is undefined. */
   int get_int(size_t col) {
+    // std::cout << "inside get int " << schema->rowSize_ << "\n";
     if (schema->col_type(col) != 'I') {
+      std::cout << "inside get int col type not I so exiting....\n";
       exit(1);
     }
     return cols[col]->as_int()->get(0);

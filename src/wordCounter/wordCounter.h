@@ -106,7 +106,7 @@ public:
       file_ = fopen(arg->file, "r");
       // if (file_ == nullptr) FATAL_ERROR("Cannot open file " << arg->file);
       if (file_ == nullptr) {
-        std::cout<<"FATAL_ERROR: Cannot open file " << arg->file << "\n";
+        // std::cout<<"FATAL_ERROR: Cannot open file " << arg->file << "\n";
         exit(1);
       }
       buf_ = new char[BUFSIZE + 1]; //  null terminator
@@ -120,11 +120,11 @@ public:
   /** Reads next word and stores it in the row. Actually read the word.
       While reading the word, we may have to re-fill the buffer  */
     virtual bool visit(Row & r) override {
-      std::cout << "visit in FR \n";
+      // std::cout << "visit in FR \n";
        assert(i_ < end_);
         assert(! isspace(buf_[i_]));
         size_t wStart = i_;
-        std::cout << "before while true in FR \n";
+        // std::cout << "before while true in FR \n";
         while (true) {
             if (i_ == end_) {
                 if (feof(file_)) { ++i_;  break; }
@@ -138,11 +138,11 @@ public:
         buf_[i_] = 0;
         // String word(buf_ + wStart, i_ - wStart);
         String *word = new String(buf_ + wStart);
-        std::cout<<"Filereader found word " << word->c_str() << "\n";
+        // std::cout<<"Filereader found word " << word->c_str() << "\n";
         r.set(0, word);
         r.printRow();
         ++i_;
-        std::cout<<"Filereader calling skipWhitespace_()\n";
+        // std::cout<<"Filereader calling skipWhitespace_()\n";
         skipWhitespace_();
         r.printRow();
         return 1;
@@ -174,6 +174,7 @@ public:
                 if (feof(file_)) return;
                 fillBuffer_();
             }
+            // std::cout << "char " << buf_[i_] << " is newline?" << (buf_[i_] == '\n') << "\n";
             // if the current character is not whitespace, we are done
             if (!isspace(buf_[i_]))
                 return;
@@ -190,7 +191,7 @@ public:
   SIMap& map_;  // String to Num map;  Num holds an int
 
   Adder(SIMap& map) : map_(map)  {
-    std::cout << "map add " << &map_ << "\n";
+    // std::cout << "map add in adder " << &map_ << "\n";
   }
 
   ~Adder() {
@@ -203,9 +204,11 @@ public:
     Num* num = map_.contains(*word) ? map_.get(*word) : new Num();
     assert(num != nullptr);
     num->v++;
-    map_.set(*word, num);
+    map_.set(word, num);
+    // std::cout << "map size in the visit function" << map_.size_ << "\n";
+    // std::cout << "Looking at Keys in address in visit " << &(map_.items_->keys_) << "\n";
+    std::cout << map_.items_->keys_->to_string() << "\n";
 
-    std::cout << "map size " << map_.size_ << "\n";
     return false;
   }
 };
@@ -219,7 +222,7 @@ public:
   size_t seen = 0;
 
   Summer(SIMap& map) : map_(map) {
-    std::cout << "=============================\n";
+    // std::cout << "============================= map addy in summer\n";
     std::cout << &map << "\n";
   }
 
@@ -229,48 +232,57 @@ public:
 
   virtual void next() {
       if (i == map_.capacity_ ) return;
-      if ( j < map_.items_[i].keys_.size() ) {
+      if ( j < map_.items_[i].keys_->size() ) {
           j++;
           ++seen;
       } else {
           ++i;
           j = 0;
-          while( i < map_.capacity_ && map_.items_[i].keys_.size() == 0 )  i++;
+          while( i < map_.capacity_ && map_.items_[i].keys_->size() == 0 )  i++;
           if (k()) ++seen;
       }
   }
 
   String* k() {
-      if (i==map_.capacity_ || j == map_.items_[i].keys_.size()) return nullptr;
-      return (String*) (map_.items_[i].keys_.get_(j));
+      if (i==map_.capacity_ || j == map_.items_[i].keys_->size()) return nullptr;
+      String *b = ((String*) (map_.items_[i].keys_->get_(j)));
+      if (b == nullptr) {
+        //std::cout << "i = " << i << " key nullptr\n";
+      } else {
+        //std::cout << "i = " << i << " key " << b->c_str() << "\n";
+      }
+      return (String*) (map_.items_[i].keys_->get_(j));
   }
 
   size_t v() {
-      if (i == map_.capacity_ || j == map_.items_[i].keys_.size()) {
+      if (i == map_.capacity_ || j == map_.items_[i].keys_->size()) {
           assert(false); return 0;
       }
-      return ((Num*)(map_.items_[i].vals_.get_(j)))->v;
+      return ((Num*)(map_.items_[i].vals_->get_(j)))->v;
   }
 
   virtual bool visit(Row& r) {
-      String *s = new String("five");
-      std::cout << "checking for key \n";
-      std::cout << s->c_str() << ": " << map_.get(*s) << "\n";
-      if (!k()) next();
-      // String & key = *k();
-      String* key = k();
+      // std::cout << " if k() : " << (k()==nullptr) << "\n";
+      // std::cout << " IN VISITTTT with map addy : " << &map_ << "\n";
+      if (!k()) {
+        next();
+      }
+      String & key = *k();
+      //String* key = k();
       size_t value = v();
 
-      std::cout << "iside summer before set \n";
-      r.set(0, key);
+      // std::cout << "key: " << key.c_str() << " num: " << value << "\n";
+
+      // std::cout << "iside summer before set \n";
+      r.set(0, &key);
       r.set(1, (int) value);
-      std::cout << "iside summer after set \n";
+      // std::cout << "iside summer after set \n";
       next();
       return 1;
   }
 
   virtual bool done() {
-    std::cout << "seen and map size : " << seen << " " << map_.size() << "\n";
+    // std::cout << "seen and map size : " << seen << " " << map_.size() << "\n";
     return seen == map_.size();
   }
 };

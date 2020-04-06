@@ -29,7 +29,7 @@ public:
 	}
 
 	void grow_() {
-		 // std::cout << "Looking at Keys in address in grow1 " << this << "\n";
+		 std::cout << "Looking at Keys in address in grow1 " << this << "\n";
 
 		Object **copy = new Object*[size_ + 1];
         for (int i = 0; i < size_; i++) {
@@ -38,7 +38,7 @@ public:
 		size_++;
 		delete[] elements;
 		elements = copy;
-		// std::cout << "Looking at Keys in address in grow2 " << this << "\n";
+		std::cout << "Looking at Keys in address in grow2 " << this << "\n";
 	}
 
 	void push_back(Object* o) { // Adds an Object o onto end of this array
@@ -102,8 +102,8 @@ public:
 	}
 
 	const char* to_string() { // Returns the string representation of this array.
-		// std::cout << "Looking at Keys in address (not sure if this is addr) " << (this) << "\n";
-		// std::cout << size() << " size() in to_string() in array class \n";
+		std::cout << "Looking at Keys in address (not sure if this is addr) " << (this) << "\n";
+		std::cout << size() << " size() in to_string() in array class \n";
 		char *retValue = new char(1024);
 		retValue[1024] = '\0';
 		strcat(retValue, "{");
@@ -153,63 +153,57 @@ public:
  *   they key, but the value is external.  author: jv */
 class Items_ {
 public:
-  Array *keys_;
-  Array *vals_;
+  Array keys_;
+  Array vals_;
 
-  // Items_() : keys_(8), vals_(8) {}
-	Items_() {
-		keys_ = new Array(8);
-		vals_ = new Array(8);
-	}
+  Items_() : keys_(8), vals_(8) {}
 
-  Items_(Object *k, Object * v) {
-		keys_ = new Array(8);
-		vals_ = new Array(8);
-    keys_->push_back(k);
-    vals_->push_back(v);
+  Items_(Object *k, Object * v) : keys_(8), vals_(8) {
+    keys_.push_back(k);
+    vals_.push_back(v);
   }
 
   bool contains_(Object& k) {
-    for (int i = 0; i < keys_->size(); i++)
-      if (k.equals(keys_->get_(i)))
+    for (int i = 0; i < keys_.size(); i++)
+      if (k.equals(keys_.get_(i)))
 	  return true;
     return false;
   }
 
   Object* get_(Object& k) {
-    for (int i = 0; i < keys_->size(); i++)
-      if (k.equals(keys_->get_(i)))
-	return vals_->get_(i);
+    for (int i = 0; i < keys_.size(); i++)
+      if (k.equals(keys_.get_(i)))
+	return vals_.get_(i);
     return nullptr;
   }
 
   size_t set_(Object* k, Object* v) {
 		String *castedK = dynamic_cast<String*>(k);
-		// std::cout << " casted K " << castedK->c_str() << "\n";
-		// std::cout << "Looking at Keys in address in Items " << &keys_ << "\n";
-		// std::cout << " We are in Item set_. Key_size() is " << keys_.size() << " keys.count_ is " << keys_.count_ <<  "\n";
-      for (int i = 0; i < keys_->size(); i++) {
-          if (castedK->equals(keys_->get_(i))) {
-						// std::cout << "Found a duplicate. setting with new val \n";
-              vals_->put(i,v);
+		std::cout << " casted K " << castedK->c_str() << "\n";
+		std::cout << "Looking at Keys in address in Items " << &keys_ << "\n";
+		std::cout << " We are in Item set_. Key_size() is " << keys_.size() << " keys.count_ is " << keys_.count_ <<  "\n";
+      for (int i = 0; i < keys_.size(); i++) {
+          if (castedK->equals(keys_.get_(i))) {
+						std::cout << "Found a duplicate. setting with new val \n";
+              vals_.put(i,v);
               return 0;
           }
 			}
       // The keys are owned, but the key is received as a reference, i.e. not owned so we must make a copy of it.
-      keys_->push_back(castedK->clone());
+      keys_.push_back(castedK->clone());
       // String key = static_cast<String>(k);
       // String *copy = new String(key.c_str());
       // keys_.push_back(copy);
-      vals_->push_back(v);
+      vals_.push_back(v);
 			std::cout << " end of set_ \n\n";
       return 1;
   }
 
   size_t erase_(Object& k) {
-      for (int i = 0; i < keys_->size(); i++)
-          if (k.equals(keys_->get_(i))) {
-              keys_->erase_(i);
-              vals_->erase_(i);
+      for (int i = 0; i < keys_.size(); i++)
+          if (k.equals(keys_.get_(i))) {
+              keys_.erase_(i);
+              vals_.erase_(i);
               return 1;
           }
       return 0;
@@ -223,14 +217,14 @@ public:
   size_t capacity_;
     // TODO this was not size of the map, but number of occupied item positions in the top level
   size_t size_ = 0;
-  Items_* items_;  // owned
+  Items_ items_;  // owned
 
-  Map() : Map(10) {}
+  Map() : Map(10) {std::cout << "map addy in the map constrctuor defualt " << this << '\n';}
   Map(size_t cap) {
-		// std::cout << "map addy in the map constrctuor " << this << '\n';
+		std::cout << "map addy in the map constrctuor " << this << '\n';
     capacity_ = cap;
     items_ = new Items_[capacity_];
-		// std::cout << "map cap constructer items_ addy " << items_ <<  " \n";
+		std::cout << "map cap constructer items_ addy " << items_ <<  " \n";
   }
 
   ~Map() { delete[] items_; }
@@ -253,11 +247,11 @@ public:
   void set(Object* k, Object *v) {
     if (size_ >= capacity_)
         grow();
-		// std::cout << "size_ in MAP before set is " << size_ << "\n";
+		std::cout << "size_ in MAP before set is " << size_ << "\n";
 		// std::cout << "Items address in before Map before calling set is " << items_ << "\n";
     size_ += items_[off_(*k)].set_(k,v);
 		// std::cout << "Items address in after Map before calling set is " << items_ << "\n";
-		// std::cout << "size_ in MAP after set is " << size_ << "\n";
+		std::cout << "size_ in MAP after set is " << size_ << "\n";
   }
 
   /** Removes element with given key from the map.  Does nothing if the
@@ -272,13 +266,13 @@ public:
 
       Map newm(capacity_ * 2);
       for (size_t i = 0; i < capacity_; i++) {
-          size_t sz = items_[i].keys_->size();
+          size_t sz = items_[i].keys_.size();
           for (size_t j = 0; j < sz; j++) {
-              Object* k = items_[i].keys_->get_(j);
-              Object* v = items_[i].vals_->get_(j);
+              Object* k = items_[i].keys_.get_(j);
+              Object* v = items_[i].vals_.get_(j);
               newm.set(k,v);
               // otherwise the values would get deleted (if the array's destructor was doing its job I found later:)
-              items_[i].vals_->put(j, nullptr);
+              items_[i].vals_.put(j, nullptr);
           }
       }
       delete[] items_;
@@ -301,7 +295,6 @@ public:
 };
 
 
-
 /***************************************************************************
  *
  **********************************************************author:jvitek */
@@ -314,15 +307,16 @@ public:
 
 class SIMap : public Map {
 public:
-  SIMap () {}
-  Num* get(String key) { return dynamic_cast<Num*>(get_(key)); }
-  void set(String* k, Num* v) {
-		std::cout << "setting in map str: " << k->c_str() << " num: " << v->v << "\n";
-		assert(v);
-		Map::set(k, v);
-	}
-
+  SIMap () { std::cout << "map addy in the SIMAP constrctuor " << this << '\n';}
+  Num* get(String& key) { return dynamic_cast<Num*>(get_(key)); }
+  // void set(String& k, Num* v) {
+	// 	std::cout << "setting in map str: " << k.c_str() << " num: " << v->v << "\n";
+	// 	assert(v);
+	// 	Map::set(k, v);
+	// }
+/*
 	void printall() {
-		std::cout << items_->keys_->to_string() << "\n";
-	}
+		std::cout << "Printing SIMap:\n";
+		std::cout << items_->keys_.to_string() << "\n";
+	}*/
 }; // KVMap
