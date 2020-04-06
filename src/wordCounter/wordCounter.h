@@ -191,7 +191,7 @@ public:
   SIMap& map_;  // String to Num map;  Num holds an int
 
   Adder(SIMap& map) : map_(map)  {
-    // std::cout << "map add in adder " << &map_ << "\n";
+    std::cout << "map add in adder " << &map_ << "\n";
   }
 
   ~Adder() {
@@ -199,12 +199,20 @@ public:
   }
 
   virtual bool visit(Row& r) override {
+    std::cout << "before num WORD \n";
+    // r.printRow();
+    std::cout << "before num WORD2 \n";
     String* word = r.get_string(0);
+    std::cout << "After getting string\n";
+    std::cout << "WORD " << word->c_str() << "\n";
+    std::cout << "before num WORD3\n";
     assert(word != nullptr);
     Num* num = map_.contains(*word) ? map_.get(*word) : new Num();
+    std::cout << "before set WORD \n";
     assert(num != nullptr);
     num->v++;
     map_.set(word, num);
+    std::cout << "SET WORD \n";
     // std::cout << "map size in the visit function" << map_.size_ << "\n";
     // std::cout << "Looking at Keys in address in visit " << &(map_.items_->keys_) << "\n";
     std::cout << map_.items_->keys_->to_string() << "\n";
@@ -223,7 +231,7 @@ public:
 
   Summer(SIMap& map) : map_(map) {
     // std::cout << "============================= map addy in summer\n";
-    std::cout << &map << "\n";
+    std::cout << &map_ << "\n";
   }
 
   ~Summer() {

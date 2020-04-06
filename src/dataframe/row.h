@@ -91,6 +91,7 @@ class Row : public Object {
     if (schema->col_type(col) != 'S') {
       exit(1);
     }
+    std::cout << "looking for sting val now......\n";
     return cols[col]->as_string()->get(0);
   }
 

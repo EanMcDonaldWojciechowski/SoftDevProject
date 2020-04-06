@@ -26,7 +26,7 @@ class Object {
         }
 
         virtual size_t hash_me() {
-            return reinterpret_cast<size_t>(this);
+            return 0;
         }
 
         virtual Object* clone() {

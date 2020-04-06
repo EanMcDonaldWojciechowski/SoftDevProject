@@ -195,6 +195,7 @@ class DataFrame : public Object {
     * dataframe, results are undefined.
     */
   void fill_row(size_t idx, Row& row) {
+    std::cout << "FILL ROW ROW WIDTH " << scm->width() << "\n";
     for (int i = 0; i < scm->width(); i++) {
       if (row.col_type(i) == 'I') {
         row.set(i, column[i]->as_int()->get(idx));
@@ -204,9 +205,11 @@ class DataFrame : public Object {
         row.set(i, column[i]->as_float()->get(idx));
       } else if (row.col_type(i) == 'S') {
         row.set(i, column[i]->as_string()->get(idx));
+
       }
       row.set_idx(idx);
     }
+    std::cout << "FILL ROW done \n";
   }
 
   /** Add a row at the end of this dataframe. The row is expected to have
@@ -248,11 +251,19 @@ class DataFrame : public Object {
     }
     Row *currRow = new Row(*s1);
     DataFrame *retDF = new DataFrame(*s1);
+    print();
+    std::cout<< "SCHEMA len ..... "  << scm->length() << "\n";
     for (int j = 0; j < scm->length(); j++) {
+      std::cout << "j = " << j << "\n";
+      std::cout<< "SCHEMA len ..... "  << scm->length() << "\n";
       this->fill_row(j, *currRow);
+      std::cout << "BEFORE Accept \n";
       r.accept(*currRow);
+      std::cout << "BEFORE VISIT \n";
       r.visit(*currRow);
+      std::cout << "AFTER VISIT \n";
       retDF->add_row(*currRow);
+      std::cout << "AFTER add row \n\n\n\n";
     }
     delete scm;
     delete[] column;
@@ -910,6 +921,7 @@ void WordCount::local_count() {
   //SIMap *map = new SIMap();
   std::cout << "map size" << map.size_ << "\n";
   Adder *add = new Adder(map);
+  std::cout << "words->map(*add); \n\n";
   words->map(*add);
   // words->local_map(add); // df doesn't know about networking so it is just working with local data
   //delete words;

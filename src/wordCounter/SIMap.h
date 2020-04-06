@@ -159,6 +159,7 @@ public:
   // Items_() : keys_(8), vals_(8) {}
 	Items_() {
 		keys_ = new Array(8);
+		std::cout << "INITIAL KEY ADDRESS in Items " << &keys_ << "\n";
 		vals_ = new Array(8);
 	}
 
@@ -172,7 +173,7 @@ public:
   bool contains_(Object& k) {
     for (int i = 0; i < keys_->size(); i++)
       if (k.equals(keys_->get_(i)))
-	  return true;
+	  	return true;
     return false;
   }
 
@@ -186,9 +187,11 @@ public:
   size_t set_(Object* k, Object* v) {
 		String *castedK = dynamic_cast<String*>(k);
 		// std::cout << " casted K " << castedK->c_str() << "\n";
-		// std::cout << "Looking at Keys in address in Items " << &keys_ << "\n";
-		// std::cout << " We are in Item set_. Key_size() is " << keys_.size() << " keys.count_ is " << keys_.count_ <<  "\n";
+		std::cout << "Looking at Keys in address in Items " << &keys_ << "\n";
+		std::cout << "gett from keys \n";
+		std::cout << keys_->get_(1) << "\n";
       for (int i = 0; i < keys_->size(); i++) {
+
           if (castedK->equals(keys_->get_(i))) {
 						// std::cout << "Found a duplicate. setting with new val \n";
               vals_->put(i,v);
@@ -230,23 +233,27 @@ public:
 		// std::cout << "map addy in the map constrctuor " << this << '\n';
     capacity_ = cap;
     items_ = new Items_[capacity_];
-		// std::cout << "map cap constructer items_ addy " << items_ <<  " \n";
+		std::cout << "map cap constructer items_ addy __________________ " << items_ <<  " \n";
   }
 
   ~Map() { delete[] items_; }
 
   /** True if the key is in the map. */
-  bool contains(Object& key)  { return items_[off_(key)].contains_(key); }
+  bool contains(Object& key)  { return items_[off_(&key)].contains_(key); }
 
   /** Return the number of elements in the map. */
   size_t size()  {
       return size_;
   }
 
-  size_t off_(Object& k) { return  k.hash() % capacity_; }
+  size_t off_(Object* k) {
+		String* castedK = dynamic_cast<String*>(k);
+		std::cout << "Inserting in poition " << castedK->hash() << "\n";
+		return  castedK->hash() % capacity_;
+	}
 
   /** Get the value.  nullptr is allowed as a value.  */
-  Object* get_(Object &key) { return items_[off_(key)].get_(key); }
+  Object* get_(Object &key) { return items_[off_(&key)].get_(key); }
 
   /** Add item->val_ at item->key_ either by updating an existing Item_ or
    * creating a new one if not found.  */
@@ -255,7 +262,8 @@ public:
         grow();
 		// std::cout << "size_ in MAP before set is " << size_ << "\n";
 		// std::cout << "Items address in before Map before calling set is " << items_ << "\n";
-    size_ += items_[off_(*k)].set_(k,v);
+
+    size_ += items_[off_(k)].set_(k,v);
 		// std::cout << "Items address in after Map before calling set is " << items_ << "\n";
 		// std::cout << "size_ in MAP after set is " << size_ << "\n";
   }
@@ -263,13 +271,13 @@ public:
   /** Removes element with given key from the map.  Does nothing if the
       key is not present.  */
   void erase(Object& k) {
-    size_ -= items_[off_(k)].erase_(k);
+    size_ -= items_[off_(&k)].erase_(k);
   }
 
   /** Resize the map, keeping all Item_s. */
   void grow() {
       //LOG("Growing map from capacity " << capacity_);
-
+			std::cout << " growing \n";
       Map newm(capacity_ * 2);
       for (size_t i = 0; i < capacity_; i++) {
           size_t sz = items_[i].keys_->size();
@@ -317,6 +325,9 @@ public:
   SIMap () {}
   Num* get(String key) { return dynamic_cast<Num*>(get_(key)); }
   void set(String* k, Num* v) {
+		if (strcmp(k->c_str(), "") == 0) {
+			return;
+		}
 		std::cout << "setting in map str: " << k->c_str() << " num: " << v->v << "\n";
 		assert(v);
 		Map::set(k, v);

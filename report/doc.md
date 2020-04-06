@@ -2,7 +2,7 @@ Note: We are including both Milestone 1 and Milestone 2 in this paper. Please re
 
 Ean Wojciechowski and Hiren Patel
 Software Development
-03/21/2020
+04/06/2020
 
 Introduction: where we give a high-level description of the eau2 system.
 
@@ -11,6 +11,9 @@ The eau2 system will be able to store and provide functionality on large data se
 Architecture: where we describe the various part of eau2 at a high-level.
 
 We will have to have an application that is in charge of handling different processes. The application class can be extended to add the desired functionality of the user.
+
+Word Count Level:
+The word count level is an extension of the application level with specific methods and features for counting the words in a document. The word counter uses the virtual run method of application to enable instances of the wordCount class to all perform some function when run.
 
 Application Level:
 
@@ -28,6 +31,9 @@ Sorer:
 We want to parse a sor file and create a dataframe. The sorer will go through each field in the file, construct the schema, populate the columns, and create a dataframe at the end.
 
 Implementation: where we describe how the system is built, this can include a description of the classes and their API, but only the class you deem relevant and worth describing. (For example: do not describe the utility classes.)
+
+WordCounter:
+Our code works from the standpoint of our Dataframe downwards. We can get parts of your code given to us working but we are having a hard time getting different parts of your code working with other parts of your code. This is because you made some design decisions that we may not agree with and may not work with how we structured our APIs. We made an attempt to change both you code and our code to work together but we ran into problems with pointers and addresses since we handle our code differently.
 
 Sorer:
 Our original sorer implementation was created in Python, so we chose to use cs4500-a1p1’s sorer. To interface our DataFrame with their sorer we made a few changes to their implementation. We created a new method sorToDataframe, which would convert a read sor file into a dataframe. We refactored their adapter to work with our column implementation, giving us the ability to read data from a sor file and add it column by column to a dataframe.
@@ -170,4 +176,4 @@ What are the main differences between get and waitandget? Does wait and get just
 
 Status: where you describe what has been done and give an estimate of the work that remains.
 
-Large part of the implementation has been done. A lot of the detailed technical stuff is done. We now have to fix up a few bugs, clean up our code, and get the entire application working as a whole without major problems.
+We are 95% done with the assignment, but we really struggled this week meshing our code with the provided wordCounter. We are mostly certain that our distributed KVStore and data frames work, but we are having issues with pointers and memory copies in SIMap, which uses our Array class under the hood. We ran out of time to fully integrate this wordCounter on top of our Application class.
