@@ -18,8 +18,10 @@
 #include <thread>
 #include "../network/network.h"
 #include "../network/KVStore.h"
-#include "../wordCounter/SIMap.h"
-#include "../wordCounter/wordCounter.h"
+#include "../application/sorer.h"
+// #include "../wordCounter/SIMap.h"
+// #include "../wordCounter/wordCounter.h"
+// #include "../linus/linus.h"
 
 // class KVStore;
 // class Key;
@@ -195,7 +197,7 @@ class DataFrame : public Object {
     * dataframe, results are undefined.
     */
   void fill_row(size_t idx, Row& row) {
-    std::cout << "FILL ROW ROW WIDTH " << scm->width() << "\n";
+    // std::cout << "FILL ROW ROW WIDTH " << scm->width() << "\n";
     for (int i = 0; i < scm->width(); i++) {
       if (row.col_type(i) == 'I') {
         row.set(i, column[i]->as_int()->get(idx));
@@ -209,7 +211,7 @@ class DataFrame : public Object {
       }
       row.set_idx(idx);
     }
-    std::cout << "FILL ROW done \n";
+    // std::cout << "FILL ROW done \n";
   }
 
   /** Add a row at the end of this dataframe. The row is expected to have
@@ -510,6 +512,23 @@ class DataFrame : public Object {
     df->print();
     return df;
   }
+
+  DataFrame* fromFile(const char* file, Key *key, KVStore* kv) {
+    // char* file_name = "../data/sampleData.sor";
+    std::cout << "Opening file path " << file << "\n";
+    FILE *f = fopen(file, "r");
+    if (f == NULL) {
+      std::cout << "ERROR opening file." << "\n";
+    }
+    SOR* reader = new SOR();
+    reader->read(f, 0, 10000);
+    // std::cout << "reading file" << "\n";
+    DataFrame *df = reader->sorToDataframe();
+    std::cout << "This is file contents I found\n";
+    df->print();
+    kv->put(key, df);
+    return df;
+  }
 };
 
 
@@ -526,9 +545,12 @@ void KVStore::put(Key *k, DataFrame *v) {
   DataFrame *metaData = new DataFrame(*s);
   metaData->add_column(c);
 
+  std::cout<<"Putting metadata df in key "<< k->key <<"\n";
+  metaData->print();
+
   store->put(k, metaData);
 
-  std::cout<<"second\n";
+  std::cout<<"second2\n";
 
   Key *colKey;
   for (int i = 0; i < numCols; i++) {
@@ -907,63 +929,72 @@ void ChunkStore::waitForKey(Key* k) {
 }
 
 
-void WordCount::local_count() {
-  sleep(1);
-  std::cout << "before get \n";
-  DataFrame* words = (kv->get(in));
-  std::cout << "Printing words: \n";
-  words->print();
+// void WordCount::local_count() {
+//   sleep(1);
+//   std::cout << "before get \n";
+//   DataFrame* words = (kv->get(in));
+//   std::cout << "Printing words: \n";
+//   words->print();
+//
+//   // DataFrame* words = (kv.waitAndGet(in)); // We need to local implementation
+//   // p("Node ").p(nodeIndex).pln(": starting local count...");
+//   // std::cout << "Node " << nodeIndex << ": starting local count...\n";
+//   SIMap map;
+//   //SIMap *map = new SIMap();
+//   std::cout << "map size" << map.size_ << "\n";
+//   Adder *add = new Adder(map);
+//   std::cout << "words->map(*add); \n\n";
+//   words->map(*add);
+//   // words->local_map(add); // df doesn't know about networking so it is just working with local data
+//   //delete words;
+//   std::cout << "Printing map \n\n";
+//   std::cout << map.items_->keys_->to_string() << "\n\n\n";
+//   std::cout << "map size " << map.size_ << "\n";
+//
+//   sleep(3);
+// /*  Summer* cnt = new Summer(map);
+//   char* colType = new char[3];
+//   strcat(colType, "SI");
+//   Schema *s = new Schema();
+//   DataFrame *df = new DataFrame(*s);
+//   std::cout << "before from visit with summer \n";
+//   std::cout << "In local_count doing fromVisitor with key " << mk_key(nodeIndex)->key << "\n";
+//   DataFrame *retDf = df->fromVisitor(mk_key(nodeIndex), kv, colType, cnt);
+//   std::cout << "local count df -------------- \n";
+//   retDf->print();
+//   std::cout << "local count df -------------- \n";
+//   delete retDf;*/
+// }
+//
+// void WordCount::run_() {
+//   // std::cout << "DF Beginning run \n";
+//   if (nodeIndex == 0) {
+//     FileReader *fr = new FileReader(arg);
+//     // std::cout << "DF inside run after file reading \n";
+//     char* colType = new char[3];
+//     strcat(colType, "S");
+//     Schema *s = new Schema();
+//     DataFrame *df = new DataFrame(*s);
+//     // std::cout<<"DF creating fromVisitor\n";
+//     DataFrame *retDf = df->fromVisitor(in, kv, colType, fr);
+//     // std::cout<<"DF done with fromVisitor\n";
+//     delete retDf;
+//   }
+//   local_count();
+//   //reduce();
+// }
+//
+// void WordCount::merge(DataFrame* df, SIMap& m) {
+//   Adder add(m);
+//   df->map(add);
+//   delete df;
+// }
 
-  // DataFrame* words = (kv.waitAndGet(in)); // We need to local implementation
-  // p("Node ").p(nodeIndex).pln(": starting local count...");
-  // std::cout << "Node " << nodeIndex << ": starting local count...\n";
-  SIMap map;
-  //SIMap *map = new SIMap();
-  std::cout << "map size" << map.size_ << "\n";
-  Adder *add = new Adder(map);
-  std::cout << "words->map(*add); \n\n";
-  words->map(*add);
-  // words->local_map(add); // df doesn't know about networking so it is just working with local data
-  //delete words;
-  std::cout << "Printing map \n\n";
-  std::cout << map.items_->keys_->to_string() << "\n\n\n";
-  std::cout << "map size " << map.size_ << "\n";
-
-  sleep(3);
-/*  Summer* cnt = new Summer(map);
-  char* colType = new char[3];
-  strcat(colType, "SI");
+DataFrame* SOR::sorToDataframe() {
   Schema *s = new Schema();
-  DataFrame *df = new DataFrame(*s);
-  std::cout << "before from visit with summer \n";
-  std::cout << "In local_count doing fromVisitor with key " << mk_key(nodeIndex)->key << "\n";
-  DataFrame *retDf = df->fromVisitor(mk_key(nodeIndex), kv, colType, cnt);
-  std::cout << "local count df -------------- \n";
-  retDf->print();
-  std::cout << "local count df -------------- \n";
-  delete retDf;*/
-}
-
-void WordCount::run_() {
-  // std::cout << "DF Beginning run \n";
-  if (nodeIndex == 0) {
-    FileReader *fr = new FileReader(arg);
-    // std::cout << "DF inside run after file reading \n";
-    char* colType = new char[3];
-    strcat(colType, "S");
-    Schema *s = new Schema();
-    DataFrame *df = new DataFrame(*s);
-    // std::cout<<"DF creating fromVisitor\n";
-    DataFrame *retDf = df->fromVisitor(in, kv, colType, fr);
-    // std::cout<<"DF done with fromVisitor\n";
-    delete retDf;
+  DataFrame *ret = new DataFrame(*s);
+  for (size_t i = 0; i < len_; i++) {
+    ret->add_column(cols_[i]);
   }
-  local_count();
-  //reduce();
-}
-
-void WordCount::merge(DataFrame* df, SIMap& m) {
-  Adder add(m);
-  df->map(add);
-  delete df;
+  return ret;
 }

@@ -1,8 +1,8 @@
 //lang:CwC
 #pragma once
 #include <unistd.h>
-#include "helpers.h"
-#include "../dataframe/modified_dataframe.h"
+// #include "helpers.h"
+// #include "../dataframe/modified_dataframe.h"
 
 // The maximum length of a line buffer. No lines over 4095 bytes
 static const int buff_len = 4096;
@@ -236,6 +236,7 @@ class SOR : public Object {
                 bool skip = false;
                 for (size_t i = 0; i < len_; i++) {
                     if (!cols_[i]->can_add(row[i])) {
+                      std::cout << "Skipping a line... TODO FIX OFF BY ONE \n";
                         skip = true;
                         break;
                     }
@@ -277,12 +278,5 @@ class SOR : public Object {
 
         // Assumes
         // Converts the columns into a dataframe and returns the dataframe
-        DataFrame* sorToDataframe() {
-          Schema *s = new Schema();
-          DataFrame *ret = new DataFrame(*s);
-          for (size_t i = 0; i < len_; i++) {
-            ret->add_column(cols_[i]);
-          }
-          return ret;
-        }
+        DataFrame* sorToDataframe();
 };

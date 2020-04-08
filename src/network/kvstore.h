@@ -23,13 +23,10 @@ public:
 
     char* clientIP = new char[256];
     strcat(clientIP, "127.0.0.");
-    std::cout << "before " << clientIP << "\n";
     char* nodeIdxChar = new char[256];
-    std::cout << "before1 \n";
     snprintf(nodeIdxChar, sizeof(nodeIndex + 2), "%d", nodeIndex + 2);
-    std::cout << "before2 "<< nodeIdxChar << "\n";
     strcat(clientIP, nodeIdxChar);
-    std::cout << "after " << clientIP << "\n";
+    std::cout << "Client IP is " << clientIP << "\n";
     client = new Client(clientIP, basePort + nodeIndex, store, num_nodes);
 
    }

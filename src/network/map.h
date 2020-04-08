@@ -51,6 +51,12 @@
        return (strcmp(this->key, castedO->key) == 0);
     }
 
+    Key* clone() {
+      char *retName = new char[strlen(key)];
+      strcpy(retName, key);
+      return new Key(retName, nodeIndex);
+    }
+
     size_t home() {return nodeIndex;}
  };
 

@@ -12,7 +12,7 @@
 class Sys {
  public:
 
- Sys() {}
+ // Sys() {}
 
   // Printing functions
   Sys& p(char* c) { std::cout << c; return *this; }

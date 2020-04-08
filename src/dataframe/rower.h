@@ -24,3 +24,29 @@ class Rower : public Object {
     return nullptr;
   }
 };
+
+class Writer : public Rower {
+public:
+  char* buf_;
+  Writer() {}
+  ~Writer() {}
+   bool isspace(char ch) {
+     if (ch == ' ') {
+       return 1;
+     } else {
+       return 0;
+     }
+   }
+   // virtual void visit(Row & r);
+   virtual bool visit(Row & r) {return 0;};
+   virtual bool done() {return 0;};
+};
+
+class Reader : public Rower {
+public:
+  Reader() {}
+  ~Reader() {}
+  // virtual void visit(Row & r);
+   virtual bool visit(Row & r) {return 0;};
+   virtual bool done() {return 0;};
+};

@@ -117,6 +117,12 @@ public:
     val_ = key->key;
   }
 
+  StrBuff(const char* ch) {
+    size_ = strlen(ch);
+    val_ = new char[capacity_ = size_];
+    strcpy(val_, ch);
+  }
+
   void grow_by_(size_t step) {
       if (val_ == nullptr) {
         val_ = new char[step + 1];
