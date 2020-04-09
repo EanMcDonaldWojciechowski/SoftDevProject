@@ -15,12 +15,14 @@
      size_t nodeIndex;
 
      Key(char* key_, size_t nodeIndex_) {
-       key = key_;
+       key = new char[strlen(key_)];
+       strcpy(key, key_);
        nodeIndex = nodeIndex_;
      }
 
      Key(char* key_) {
-       key = key_;
+       key = new char[strlen(key_)];
+       strcpy(key, key_);
        nodeIndex = 0;
      }
 
@@ -152,9 +154,9 @@ class Hashmap : public Object {
         //constructor
         //capcity will be initilized as 4, size is 0 by default.
         Hashmap() {
-            data = new Hashmap_pair*[4];
+            data = new Hashmap_pair*[4096];
             size_ = 0;
-            capacity_ = 4;
+            capacity_ = 4096;
             hash_code = 0;
             for (size_t i = 0; i < capacity_; i++) {
               data[i] = nullptr;
@@ -194,7 +196,13 @@ class Hashmap : public Object {
         virtual Object* get(Object *key) {
           Key *key1 = dynamic_cast<Key*>(key);
           size_t hashKey = (key1->hash() % capacity_);
-          // std::cout << "saved key " << dynamic_cast<Key*>(data[hashKey])->key << " key " << key1->key <<  " equals " << dynamic_cast<Key*>(data[hashKey])->equals(key) <<  "\n" ;
+          // std::cout << "Key " << key1->key << " with hash " << hashKey << " with capacity_ " << capacity_ << "\n";
+          // std::cout << "Key's plain hash() is " << key->hash() << "\n";
+          // std::cout << "Key1's plain hash() is " << key1->hash() << "\n";
+          // std::cout << "Looking for key in Hash location " << (key->hash() % capacity_) << "\n";
+          // std::cout << "Found key " << dynamic_cast<Key*>(data[hashKey]->key_)->key << "\n";
+          // printall();
+          // std::cout << "Found key " << dynamic_cast<Key*>(data[hashKey]->key_)->key << " key " << key1->key <<  " equals " << dynamic_cast<Key*>(data[hashKey]->key_)->equals(key1) <<  "\n" ;
           while(!data[hashKey]->key_->equals(key1)) {
             hashKey = (hashKey + 1) % capacity_;
           }
@@ -256,16 +264,19 @@ class Hashmap : public Object {
 
         // Associates the specified value with the specified key in this map.
         virtual void put(Object *key, Object *val) {
+          // std::cout << "Before expanding hashKey " << (key->hash() % capacity_) << " capacity_ " << capacity_ << "\n";
+          if ((size_ + 1) * 2 > capacity_) {
+            // std::cout << "expanding......\n";
+            expand();
+            // std::cout << "DONE ______   expanding......\n";
+          }
           Key *key1 = dynamic_cast<Key*>(key);
           Value *val1 = dynamic_cast<Value*>(val);
-          if ((size_ + 1) * 2 > capacity_) {
-            expand();
-          }
           size_t hashKey = (key1->hash() % capacity_);
-          // std::cout << " key->hash() " << key1->hash() << "\n";
-          // std::cout << " hashKey " << hashKey << " capacity_ " << capacity_ << "\n";
+          // std::cout << "Key " << key1->key << " hashKey " << hashKey << " capacity_ " << capacity_ << "\n";
+          // std::cout << "Key's plain hash() is " << key->hash() << "\n";
+          // std::cout << "Key1's plain hash() is " << key1->hash() << "\n";
           size_t i = hashKey;
-          // std::cout << "IN PUT i " << i << " hashKey " << hashKey << "\n";
           Hashmap_pair *temp = nullptr;
           Hashmap_pair *newObject = new Hashmap_pair(key1, val1);
 
@@ -276,6 +287,7 @@ class Hashmap : public Object {
           while(!(data[i] == nullptr)) {
             if (data[i]->key_->equals(key1)) {
               dupKey = true;
+              std::cout << "ERROR: Found duplicate key.";
               break;
             }
             // Either the hash of the object in the current spot is lower then \

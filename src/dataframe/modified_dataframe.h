@@ -1,5 +1,6 @@
 #pragma once
 #include <stdio.h>
+#include <unistd.h>
 #include <stdarg.h>
 #include <iostream>
 #include <string.h>
@@ -41,7 +42,6 @@
 class DataFrame : public Object {
  public:
    Schema* scm;
-   // Row** rows;
    Column** column;
 
   /** Create a data frame with the same columns as the given df but with no rows or rownmaes */
@@ -253,19 +253,19 @@ class DataFrame : public Object {
     }
     Row *currRow = new Row(*s1);
     DataFrame *retDF = new DataFrame(*s1);
-    print();
-    std::cout<< "SCHEMA len ..... "  << scm->length() << "\n";
+    // print();
+    // std::cout<< "SCHEMA len ..... "  << scm->length() << "\n";
     for (int j = 0; j < scm->length(); j++) {
-      std::cout << "j = " << j << "\n";
-      std::cout<< "SCHEMA len ..... "  << scm->length() << "\n";
+      // std::cout << "j = " << j << "\n";
+      // std::cout<< "SCHEMA len ..... "  << scm->length() << "\n";
       this->fill_row(j, *currRow);
-      std::cout << "BEFORE Accept \n";
+      // std::cout << "BEFORE Accept \n";
       r.accept(*currRow);
-      std::cout << "BEFORE VISIT \n";
+      // std::cout << "BEFORE VISIT \n";
       r.visit(*currRow);
-      std::cout << "AFTER VISIT \n";
+      // std::cout << "AFTER VISIT \n";
       retDF->add_row(*currRow);
-      std::cout << "AFTER add row \n\n\n\n";
+      // std::cout << "AFTER add row \n\n\n\n";
     }
     delete scm;
     delete[] column;
@@ -492,24 +492,24 @@ class DataFrame : public Object {
     Schema *s = new Schema(colType);
     DataFrame *df = new DataFrame(*s);
     Row *r = new Row(*s);
-    std::cout<<"DF in from Visitor Entering while loop: " << " Done ? " << vals->done() << " with colType " <<  colType <<" \n";
+    // std::cout<<"DF in from Visitor Entering while loop: " << " Done ? " << vals->done() << " with colType " <<  colType <<" \n";
 
     while (!vals->done()) {
-      std::cout<<"DF in from Visitor IN while loop\n";
+      // std::cout<<"DF in from Visitor IN while loop\n";
       vals->visit(*r);
-      std::cout << "Row after visit \n";
+      // std::cout << "Row after visit \n";
       if (s->rowSize_ > 1) {
-        std::cout << "ROW value after visit: " << r->get_string(0)->c_str() << " : " << r->get_int(1) << "\n";
+        // std::cout << "ROW value after visit: " << r->get_string(0)->c_str() << " : " << r->get_int(1) << "\n";
       }
       df->add_row(*r);
-      std::cout<<"DF in from Visitor IN while loop3\n";
+      // std::cout<<"DF in from Visitor IN while loop3\n";
     }
-    std::cout<<"df in from visitor \n";
-    df->print();
+    // std::cout<<"df in from visitor \n";
+    // df->print();
 
     kv->put(key, df);
-    std::cout<<"df in from visitor AFTER PUT\n";
-    df->print();
+    // std::cout<<"df in from visitor AFTER PUT\n";
+    // df->print();
     return df;
   }
 
@@ -524,8 +524,8 @@ class DataFrame : public Object {
     reader->read(f, 0, 10000);
     // std::cout << "reading file" << "\n";
     DataFrame *df = reader->sorToDataframe();
-    std::cout << "This is file contents I found\n";
-    df->print();
+    // std::cout << "This is file contents I found\n";
+    // df->print();
     kv->put(key, df);
     return df;
   }
@@ -535,7 +535,7 @@ class DataFrame : public Object {
 void KVStore::put(Key *k, DataFrame *v) {
   size_t numCols = v->scm->width();
 
-  std::cout<<"first numCol: " << numCols << "\n";
+  // std::cout<<"first numCol: " << numCols << "\n";
 
   char *colType = v->scm->colType;
   String *metaDataStr = new String(colType);
@@ -545,12 +545,12 @@ void KVStore::put(Key *k, DataFrame *v) {
   DataFrame *metaData = new DataFrame(*s);
   metaData->add_column(c);
 
-  std::cout<<"Putting metadata df in key "<< k->key <<"\n";
-  metaData->print();
+  // std::cout<<"Putting metadata df in key "<< k->key <<"\n";
+  // metaData->print();
 
   store->put(k, metaData);
 
-  std::cout<<"second2\n";
+  // std::cout<<"second2\n";
 
   Key *colKey;
   for (int i = 0; i < numCols; i++) {
@@ -559,23 +559,25 @@ void KVStore::put(Key *k, DataFrame *v) {
     strcat(colKeyChar, k->key);
     strcat(colKeyChar, "_");
     char nodeIdxChar[256];
+    memset(nodeIdxChar, 0, 256);
     snprintf(nodeIdxChar,sizeof(i), "%d", i);
     strcat(colKeyChar, nodeIdxChar);
     strcat(colKeyChar, "_");
     char *colTypeChar = new char[2];
+    memset(colTypeChar, 0, 2);
     colTypeChar[0] = colType[i];
     colTypeChar[1] = '\0';
     strcat(colKeyChar, colTypeChar);
 
-    std::cout<<"third colKeyChar is " << colKeyChar << " \n";
+    // std::cout<<"third colKeyChar is " << colKeyChar << " \n";
 
     Schema *colS = new Schema();
     DataFrame *colDf = new DataFrame(*colS);
     colDf->add_column(v->column[i]);
-    std::cout << "ith col i = " << i << " has the following type " << v->column[i]->get_type() << "\n";
+    // std::cout << "ith col i = " << i << " has the following type " << v->column[i]->get_type() << "\n";
 
     colKey = new Key(colKeyChar, k->nodeIndex);
-    std::cout<<"forth\n";
+    // std::cout<<"forth\n";
     store->put(colKey, colDf);
     delete colDf;
     delete colS;
@@ -605,7 +607,7 @@ DataFrame* KVStore::get(Key *k) {
   strcat(colKeyChar, k->key);
   strcat(colKeyChar, "_DONE");
   Key *chunkKey = new Key(colKeyChar, nodeIndex);
-  std::cout<<"Looking for key " << colKeyChar << " with nodeidx " << nodeIndex << "\n";
+  // std::cout<<"Looking for key " << colKeyChar << " with nodeidx " << nodeIndex << "\n";
   store->waitForKey(chunkKey);
   // std::cout<<"FOUND KEY MOVING ON \n";
   Schema *colS = new Schema();
@@ -665,7 +667,7 @@ DataFrame* KVStore::waitAndGet(Key *k) {
   Key *colKey;
   for (int i = 0; i < strlen(colTypes->c_str()); i++) {
     type = colTypes->c_str()[i];
-    std::cout << "finding column #" << i << " type " << type << "\n";
+    // std::cout << "finding column #" << i << " type " << type << "\n";
 
     char* colKeyChar = new char[1024];
     memset(colKeyChar, 0, 1025);
@@ -758,17 +760,17 @@ DataFrame* ChunkStore::get(Key *k) {
   Value *chunkVal;
   while (subKeys[i] != nullptr) {
     chunkVal = dynamic_cast<Value*>(store->get(subKeys[i]));
-    std::cout << "Looking for key: " << subKeys[i]->key << "\n";
+    // std::cout << "Looking for key: " << subKeys[i]->key << "\n";
 
-    std::cout << "Print i " << i << "\n";
-    std::cout << "firstChunkStoreKey is " << firstChunkStoreKey << "\n";
+    // std::cout << "Print i " << i << "\n";
+    // std::cout << "firstChunkStoreKey is " << firstChunkStoreKey << "\n";
     if (strcmp(subKeys[i]->key, firstChunkStoreKey) == 0) {
-      std::cout << "Print ChunkVal 0 before taking off metadata: " << chunkVal->value << "\n";
+      // std::cout << "Print ChunkVal 0 before taking off metadata: " << chunkVal->value << "\n";
       size_t fieldNum = 0;
       int m;
       for (m = 0; m < strlen(chunkVal->value); m++) {
-        std::cout << "current char " << chunkVal->value[m] << "\n";
-        std::cout<<"fieldNum : " << fieldNum << "\n";
+        // std::cout << "current char " << chunkVal->value[m] << "\n";
+        // std::cout<<"fieldNum : " << fieldNum << "\n";
         if (chunkVal->value[m] == '}') {
           fieldNum++;
         }
@@ -778,7 +780,7 @@ DataFrame* ChunkStore::get(Key *k) {
       }
       char *val = new char[1024];
       memcpy(val, &chunkVal->value[m + 1], (strlen(chunkVal->value) - m + 1));
-      std::cout << "Print val after taking off metadata: " << val << "\n";
+      // std::cout << "Print val after taking off metadata: " << val << "\n";
       chunkVal->value = val;
     }
 
@@ -819,7 +821,7 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
     Key *gotKey = new Key(keyVal, nodeIndex);
     waitForKey(gotKey);
     firstChunk = dynamic_cast<Value*>(store->get(gotKey));
-    usleep(100000);
+    usleep(10000);
     store->remove(gotKey);
   }
 
@@ -922,9 +924,9 @@ void ChunkStore::waitForKey(Key* k) {
   while (!store->keyExists(k)) {
     usleep(500000);
 
-    std::cout << "WAITING FOR KEY " << k->key <<" --------- \n";
-    store->printall();
-    std::cout << "---------- --------- \n";
+    // std::cout << "WAITING FOR KEY " << k->key <<" --------- \n";
+    // store->printall();
+    // std::cout << "---------- --------- \n";
   }
 }
 

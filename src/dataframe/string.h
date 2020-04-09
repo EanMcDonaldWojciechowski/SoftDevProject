@@ -144,7 +144,7 @@ public:
       //strcpy(val_, str);
       memcpy(val_+size_, str, step);
       size_ += step;
-      printBuf();
+      // printBuf();
 
       return *this;
   }

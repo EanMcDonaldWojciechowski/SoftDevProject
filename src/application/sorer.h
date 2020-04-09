@@ -5,7 +5,8 @@
 // #include "../dataframe/modified_dataframe.h"
 
 // The maximum length of a line buffer. No lines over 4095 bytes
-static const int buff_len = 4096;
+// static const int buff_len = 4096;
+static const int buff_len = 10000;
 
 // Reads a file and determines the schema on read
 class SOR : public Object {
@@ -143,7 +144,7 @@ class SOR : public Object {
                 delete[] row;
 
             }
-            // std::cout << "end infer \n";
+            std::cout << "end infer \n";
         }
 
         // Find the start of the field value and null terminate it.
@@ -225,9 +226,12 @@ class SOR : public Object {
 
                 size_t num_fields;
                 // current row could have more columns than infered - parse the frist len_ columns
+                // std::cout << "parsing row\n";
                 char** row = parse_row_(buf, &num_fields);
+                // std::cout << "parsing row ended\n";
                 // skipping rows with too few fields
                 if (num_fields == 0) {
+                  // std::cout << "num_fields == 0\n";
                     delete[] row;
                     continue;
                 }
@@ -236,44 +240,53 @@ class SOR : public Object {
                 bool skip = false;
                 for (size_t i = 0; i < len_; i++) {
                     if (!cols_[i]->can_add(row[i])) {
-                      std::cout << "Skipping a line... TODO FIX OFF BY ONE \n";
+                      // std::cout << "Skipping a /line... TODO FIX OFF BY ONE \n";
                         skip = true;
                         break;
                     }
                 }
                 if (skip) {
+                  // std::cout << "Skipping..\n";
                     delete[] row;
                     continue;
                 }
 
                 // add all fields in this row to columns
                 for (size_t i = 0; i < len_; i++) {
+                  // std::cout << "iteration " << i << " with len " << len_ << "\n";
                     if (i >= num_fields || row[i] == nullptr) {
+                      // std::cout << "cols_[i] = nullptr..\n";
                         cols_[i] = nullptr;
                     } else {
+                      // std::cout << "else branch.\n";
                         char type = cols_[i]->get_type();
+                        // std::cout << "after get_type.\n";
                         char* pEnd = new char[512];
+                        // std::cout << "pEnd = new char[512].\n";
                         if (type == 'B') {
+                          // std::cout << "push back B.\n";/
                           bool val = strtol(row[i], &pEnd, 10);
-
                           cols_[i]->push_back(val);
                         } else if (type == 'I') {
+                          // std::cout << "push back I.\n";
                           int val = strtol(row[i], &pEnd, 10);
-
                           cols_[i]->push_back(val);
                         } else if (type == 'F') {
+                          // std::cout << "push back F.\n";
                           float val = strtod(row[i], &pEnd);
-
                           cols_[i]->push_back(val);
                         } else {
+                          // std::cout << "push back S.\n";
                           String *wrap = new String(row[i]);
                           cols_[i]->push_back(wrap);
                         }
+                        memset(pEnd, 0, 512);
                     }
                 }
+                // std::cout << "Total bytes read: "<< total_bytes <<"\n";
                 delete[] row;
-
             }
+            // std::cout << "Finished with parse 2 ...\n";
         }
 
         // Assumes

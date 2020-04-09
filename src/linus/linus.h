@@ -232,9 +232,9 @@ public:
   //const char* PROJ = "datasets/projects.ltgt";
   //const char* USER = "datasets/users.ltgt";
   //const char* COMM = "datasets/commits.ltgt";
-  const char* PROJ = "../src/linus/datasets/projects.sor";
-  const char* USER = "../src/linus/datasets/users.sor";
-  const char* COMM = "../src/linus/datasets/commits.sor";
+  const char* PROJ = "../src/linus/datasets/original/projects.sor";
+  const char* USER = "../src/linus/datasets/original/users.sor";
+  const char* COMM = "../src/linus/datasets/original/commits.sor";
   DataFrame* projects; //  pid x project name
   DataFrame* users;  // uid x user name
   DataFrame* commits;  // pid x uid x uid
@@ -249,8 +249,9 @@ public:
   /** Compute DEGREES of Linus.  */
   void run_() override {
     readInput();
-    std::cout << "Reading3...\n";
-    // for (size_t i = 0; i < DEGREES; i++) step(i);
+    std::cout << "Starting Step....................\n";
+    // sleep(6);
+    for (size_t i = 0; i < DEGREES; i++) step(i);
   }
 
   /** Node 0 reads three files, cointainng projects, users and commits, and
@@ -276,25 +277,29 @@ public:
       // This dataframe contains the id of Linus.
       df->fromScalar(new Key("users-0-0"), kv, LINUS);
     } else {
+      std::cout << "Starting df...\n";
        projects = dynamic_cast<DataFrame*>(kv->get(&pK));
+       std::cout << "Finish df 1...\n";
        users = dynamic_cast<DataFrame*>(kv->get(&uK));
+       std::cout << "Finish df 2...\n";
        commits = dynamic_cast<DataFrame*>(kv->get(&cK));
+       std::cout << "Finish df 3...\n";
     }
+    std::cout << "Starting sets...\n";
     uSet = new Set(users);
     pSet = new Set(projects);
+    std::cout << "Done wiht sets...\n";
     delete df;
     delete s;
-    sleep(2);
-    std::cout << "Done with read input...\n";
-    sleep(1);
  }
 
  /** Performs a step of the linus calculation. It operates over the three
   *  datafrrames (projects, users, commits), the sets of tagged users and
   *  projects, and the users added in the previous round. */
   void step(int stage) {
-    std::cout << "inside STEP \n";
-    std::cout << "Stage \n" << stage << "\n";
+    kv->store->store->printall();
+    // std::cout << "inside STEP \n";
+    // std::cout << "Stage \n" << stage << "\n";
     // Key of the shape: users-stage-0
     Key uK(StrBuff("users-").c(stage).c("-0").get()->c_str());
     // A df with all the users added on the previous round

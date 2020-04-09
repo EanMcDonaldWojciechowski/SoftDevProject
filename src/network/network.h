@@ -319,7 +319,7 @@ public:
         clientSock = sendSockets[i];
       }
     }
-    usleep(100000);
+    usleep(10000);
     send(clientSock , msg , strlen(msg) , 0);
     std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
   }
@@ -422,7 +422,7 @@ public:
 
 
   void connectToPeers() {
-    usleep(100000);
+    usleep(10000);
     for (int i = 0; i < numNeighbors; i++) {
       struct sockaddr_in peer_addr = neighborRoutes[i];
       int peerSock;
@@ -515,16 +515,16 @@ public:
     val[strlen(message) - i + 1] = '\0';
     Value *v = new Value(val);
     store->put(k, v);
-    store->printall();
+    // store->printall();
     memset(message, 0, 2048);
   }
 
   void retrieveLocal(char* message, int sd) {
     size_t sendToPort;
     for (int i = 0; i < numNeighbors; i++) {
-      std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
-      std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
-      std::cout << "recSockets[i]: " << recSockets[i] << "\n";
+      // std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
+      // std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
+      // std::cout << "recSockets[i]: " << recSockets[i] << "\n";
       if (recSockets[i] == sd) {
         sendToPort = ntohs(neighborRoutes[i].sin_port);
       }
@@ -543,10 +543,11 @@ public:
     }
     char *keyVal = new char[4];
     strcat(keyVal, "RSP");
+    // store->printall();
     Value *v = dynamic_cast<Value*>(store->get(k));
     Key *tempKey = new Key(keyVal, myPort - 8810);
     char* returnMsg = v->dataToSend(tempKey);
-    usleep(100000);
+    usleep(10000);
 
     sendMessage(sendToPort, returnMsg);
   }

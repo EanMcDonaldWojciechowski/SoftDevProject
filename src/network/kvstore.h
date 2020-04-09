@@ -48,6 +48,7 @@ public:
 
   void sendInfo(Key *chunkKey, Value *val) {
     if (chunkKey->nodeIndex == nodeIndex) {
+      usleep(10000);
       std::cout << "Storing locally on key " << chunkKey->key << " with values " << val->value << "\n";
       store->put(chunkKey, val);
     } else {
