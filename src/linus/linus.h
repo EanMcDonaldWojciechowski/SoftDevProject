@@ -18,8 +18,8 @@
 
  class Args : public Object {
  public:
-   size_t num_nodes;
-   size_t nodeIndex;
+   size_t num_nodes = 0;
+   size_t nodeIndex = 0;
 
    Args() {}
 

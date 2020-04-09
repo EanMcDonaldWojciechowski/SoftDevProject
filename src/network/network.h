@@ -23,7 +23,7 @@ class Server {
     int* routes;
     sockaddr_in* actualClientRoutes;
     int opt = TRUE;
-    int master_socket;
+    int master_socket = 0;
     int addrlen;
     int new_socket;
     int* client_socket;
@@ -41,6 +41,8 @@ class Server {
     routes = new int[max_clients];
     actualClientRoutes = new sockaddr_in[max_clients];
     client_socket = new int[max_clients];
+    String *strIP = new String("127.0.0.1");
+    myIP = strIP->c_str();
     std::cout<<"Server constructor done.\n";
   }
 
@@ -52,8 +54,7 @@ class Server {
   void initialize() {
     std::cout << "server init started \n";
     open = true;
-    // myIP = ip;
-    myIP = "127.0.0.1";
+
     for (int i = 0; i < max_clients; i++) {
         client_socket[i] = 0;
     }
@@ -102,17 +103,19 @@ class Server {
     addrlen = sizeof(address);
 
     while(numRoutes < max_clients) {
-        printf("before new connection , socket fd is %d , ip is : %s , port : %d\n" ,
-        new_socket , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+        // THESE ARE COMMENTED OUT BECAUSE VALGRIND HAD A PROBLEM WITH AN UNINITIALIZED VALUE
+        //printf("before new connection , socket fd is %d , ip is : %s , port : %d\n" ,
+        //new_socket , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
 
         if ((new_socket = accept(master_socket,
                 (struct sockaddr *)&address, (socklen_t*)&addrlen))<0) {
             perror("accept");
             exit(EXIT_FAILURE);
         }
+        // THESE ARE COMMENTED OUT BECAUSE VALGRIND HAD A PROBLEM WITH AN UNINITIALIZED VALUE
         //inform user of socket number - used in send and receive commands
-       printf("New connection , socket fd is %d , ip is : %s , port : %d\n" ,
-       new_socket , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+       //printf("New connection , socket fd is %d , ip is : %s , port : %d\n" ,
+       //new_socket , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
 
        // Reading client information
        int nPort;
@@ -342,7 +345,7 @@ public:
   }
 
   void configureWithServer() {
-    char* header = new char[4];
+    char* header = new char[256];
     strcpy(header, "IP:");
     char* thisaddress = new char[10];
     strcpy(thisaddress, myIP);
@@ -354,54 +357,7 @@ public:
     strcat(header, thisportchar);
     send(sock, header, strlen(header), 0);
     std::cout << "Sending to server my info: " << header << "\n";
-/*
-    if((valread = read( sock , buffer, 2048) > 0)) {
-      printf("Got information from Server: %s\n", buffer);
-      struct sockaddr_in neighbor;
-      neighbor.sin_family = AF_INET;
-      char charIP[10];
-      memcpy(charIP, &buffer[3],9);
-      charIP[10] = '\0';
-      char charPort[5];
-      memcpy(charPort, &buffer[15],4);
-      charPort[4] = '\0';
-      char* pEnd;
-      int nPort = strtol(charPort, &pEnd, 10);
-      neighbor.sin_port = htons(nPort);
-      std::cout << "n1 IP is " << charIP << " and port is " << nPort << "\n";
-      if(inet_pton(AF_INET, charIP, &neighbor.sin_addr)<=0) {
-    		printf("\nInvalid address/ Address not supported \n");
-    		exit(1);
-    	}
-      neighborRoutes[numNeighbors] = neighbor;
-      numNeighbors++;
-      memset(buffer, 0, 2048);
-    }
 
-    // Reading second neighbor information
-    if((valread = read( sock , buffer, 2048) > 0)) {
-      printf("Got information from Server: %s\n", buffer);
-      struct sockaddr_in neighbor;
-      neighbor.sin_family = AF_INET;
-      char charIP[10];
-      memcpy(charIP, &buffer[3],9);
-      charIP[10] = '\0';
-      char charPort[5];
-      memcpy(charPort, &buffer[15],4);
-      charPort[4] = '\0';
-      char* pEnd;
-      int nPort = strtol(charPort, &pEnd, 10);
-      neighbor.sin_port = htons(nPort);
-      std::cout << "n2 IP is " << charIP << " and port is " << nPort << "\n";
-      if(inet_pton(AF_INET, charIP, &neighbor.sin_addr)<=0) {
-    		printf("\nInvalid address/ Address not supported \n");
-    		exit(1);
-    	}
-      neighborRoutes[numNeighbors] = neighbor;
-      numNeighbors++;
-      memset(buffer, 0, 2048);
-    }
-*/
     for (int k = 0; k < num_nodes - 1; k++) {
       if((valread = read( sock , buffer, 2048) > 0)) {
         printf("Got information from Server: %s\n", buffer);

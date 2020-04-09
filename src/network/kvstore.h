@@ -22,6 +22,7 @@ public:
     }
 
     char* clientIP = new char[256];
+    memset(clientIP, 0, 256);
     strcat(clientIP, "127.0.0.");
     char* nodeIdxChar = new char[256];
     snprintf(nodeIdxChar, sizeof(nodeIndex + 2), "%d", nodeIndex + 2);
