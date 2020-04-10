@@ -235,6 +235,9 @@ public:
   const char* PROJ = "../src/linus/datasets/original/projects.sor";
   const char* USER = "../src/linus/datasets/original/users.sor";
   const char* COMM = "../src/linus/datasets/original/commits.sor";
+  // const char* PROJ = "../src/linus/datasets/projects.sor";
+  // const char* USER = "../src/linus/datasets/users.sor";
+  // const char* COMM = "../src/linus/datasets/commits.sor";
   DataFrame* projects; //  pid x project name
   DataFrame* users;  // uid x user name
   DataFrame* commits;  // pid x uid x uid
@@ -250,7 +253,7 @@ public:
   void run_() override {
     readInput();
     std::cout << "Starting Step....................\n";
-    // sleep(6);
+    sleep(2);
     for (size_t i = 0; i < DEGREES; i++) step(i);
   }
 
@@ -270,6 +273,8 @@ public:
       std::cout << "Reading...\n";
       projects = df->fromFile(PROJ, pK.clone(), kv);
       std::cout << "    "<< projects->nrows() << "\n  projects";
+      // projects->print();
+      // sleep(10);
       users = df->fromFile(USER, uK.clone(), kv);
       std::cout << "    "<< users->nrows() <<  users << "\n";
       commits = df->fromFile(COMM, cK.clone(), kv);

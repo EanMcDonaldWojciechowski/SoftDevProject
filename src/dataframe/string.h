@@ -85,7 +85,7 @@
            return hash;
        }
 
-       virtual Object* clone() {
+       virtual String* clone() {
          String *newStr = new String(str_);
          return newStr;
        }

@@ -88,7 +88,7 @@ class DataFrame : public Object {
     for (int i = 0; i < scm->width() - 1; i++) {
       temp[i] = column[i];
     }
-    temp[scm->width() - 1] = col;
+    temp[scm->width() - 1] = col->clone();
     delete[] column;
     column = temp;
     if (scm->length() == 0) {
@@ -521,12 +521,15 @@ class DataFrame : public Object {
       std::cout << "ERROR opening file." << "\n";
     }
     SOR* reader = new SOR();
-    reader->read(f, 0, 10000);
-    // std::cout << "reading file" << "\n";
+    // reader->read(f, 0, 5000000000);
+    reader->read(f, 0, 50000);
+    // reader->cols_[0]->printCol();
+    std::cout << "reading file" << "\n";
     DataFrame *df = reader->sorToDataframe();
-    // std::cout << "This is file contents I found\n";
-    // df->print();
+    std::cout << "This is file contents I found\n";
     kv->put(key, df);
+    // df->print();
+    // sleep(10);
     return df;
   }
 };
@@ -535,9 +538,10 @@ class DataFrame : public Object {
 void KVStore::put(Key *k, DataFrame *v) {
   size_t numCols = v->scm->width();
 
-  // std::cout<<"first numCol: " << numCols << "\n";
+  std::cout<<"first numCol: " << numCols << "\n";
 
   char *colType = v->scm->colType;
+  std::cout<<"colTypecolTypecolTypecolTypecolType: " << colType << "\n";
   String *metaDataStr = new String(colType);
   Column *c = new StringColumn();
   c->push_back(metaDataStr);
@@ -657,9 +661,9 @@ DataFrame* KVStore::waitAndGet(Key *k) {
   Schema *colS = new Schema();
   DataFrame *retDf = new DataFrame(*colS);
 
-  std::cout << "BEFORE waitAndGet " << k->key << " \n";
-  DataFrame *metaDF = store->waitAndGet(k);
-  std::cout << "After waitAndGet" << k->key << " \n";
+  std::cout << "BEFORE get " << chunkKey->key << " \n";
+  DataFrame *metaDF = store->get(chunkKey);
+  std::cout << "After get" << chunkKey->key << " \n";
   String *colTypes = metaDF->get_string(0,0);
 
   char type;
@@ -730,6 +734,7 @@ void ChunkStore::put(Key *k, DataFrame *v) {
 DataFrame* ChunkStore::get(Key *k) {
   char* endKey = constructEndKey(k);
   Key *finalKey = new Key(endKey, k->nodeIndex);
+  std::cout << "In chunkstore get waiting for key " << finalKey->key << "\n";
   waitForKey(finalKey);
   Value *finalVal = dynamic_cast<Value*>(store->get(finalKey));
   Column *col;
@@ -954,7 +959,7 @@ void ChunkStore::waitForKey(Key* k) {
 //   std::cout << "map size " << map.size_ << "\n";
 //
 //   sleep(3);
-// /*  Summer* cnt = new Summer(map);
+//   Summer* cnt = new Summer(map);
 //   char* colType = new char[3];
 //   strcat(colType, "SI");
 //   Schema *s = new Schema();
@@ -965,7 +970,7 @@ void ChunkStore::waitForKey(Key* k) {
 //   std::cout << "local count df -------------- \n";
 //   retDf->print();
 //   std::cout << "local count df -------------- \n";
-//   delete retDf;*/
+//   delete retDf;
 // }
 //
 // void WordCount::run_() {
@@ -983,7 +988,7 @@ void ChunkStore::waitForKey(Key* k) {
 //     delete retDf;
 //   }
 //   local_count();
-//   //reduce();
+//   reduce();
 // }
 //
 // void WordCount::merge(DataFrame* df, SIMap& m) {

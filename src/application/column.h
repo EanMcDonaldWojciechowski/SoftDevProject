@@ -87,9 +87,9 @@ class Column : public Object {
   virtual char* serializeMetadata() {
     Sys *sys = new Sys();
     // add meta data for frist chunk
-    char* data = new char[1024];
-    memset(data, 0, 1025);
-    data[1023] = '\0';
+    char* data = new char[2048];
+    memset(data, 0, 2048);
+    data[2048] = '\0';
     char chunkNum[1024];
     snprintf(chunkNum, sizeof(getNumChunks()), "%d", getNumChunks());
     strcat(data, chunkNum);
@@ -115,6 +115,7 @@ class Column : public Object {
   }
   virtual bool can_add(char* c) {return 0;}
   virtual char get_enum_type() { return -1;}
+  virtual Column* clone() {return nullptr;}
 };
 
 
@@ -261,9 +262,9 @@ class BoolColumn : public Column {
       std::cout << "Please enter a valid chunk index \n";
       exit(1);
     }
-    char* data = new char[1024];
-    memset(data, 0, 1025);
-    data[1023] = '\0';
+    char* data = new char[2048];
+    memset(data, 0, 2048);
+    data[2048] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       if (idx * sizeOfChunk + i >= count_) {
         break;
@@ -306,6 +307,23 @@ class BoolColumn : public Column {
        std::cout << "For i " << i << " = " << get(i) << "\n";
      }
    }
+
+   virtual Column* clone() {
+     bool** nElements = new bool*[numOfChunks_];
+     for(size_t chunk = 0; chunk < numOfChunks_; chunk++) {
+       nElements[chunk] = new bool[sizeOfChunk];
+       for(int k = 0; k < sizeOfChunk; k++) {
+         nElements[chunk][k] = elements[chunk][k];
+       }
+     }
+     BoolColumn *retCol = new BoolColumn();
+     delete retCol->elements;
+     retCol->elements = nElements;
+     retCol->numOfChunks_ = numOfChunks_;
+     retCol->count_ = count_;
+     return retCol;
+   }
+
 };
 
 
@@ -451,9 +469,9 @@ class FloatColumn : public Column {
       std::cout << "Please enter a valid chunk index \n";
       exit(1);
     }
-    char* data = new char[1024];
-    memset(data, 0, 1025);
-    data[1023] = '\0';
+    char* data = new char[2048];
+    memset(data, 0, 2048);
+    data[2048] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       if (idx * sizeOfChunk + i >= count_) {
         break;
@@ -496,7 +514,21 @@ class FloatColumn : public Column {
      }
    }
 
-
+   virtual Column* clone() {
+     float** nElements = new float*[numOfChunks_];
+     for(size_t chunk = 0; chunk < numOfChunks_; chunk++) {
+       nElements[chunk] = new float[sizeOfChunk];
+       for(int k = 0; k < sizeOfChunk; k++) {
+         nElements[chunk][k] = elements[chunk][k];
+       }
+     }
+     FloatColumn *retCol = new FloatColumn();
+     delete retCol->elements;
+     retCol->elements = nElements;
+     retCol->numOfChunks_ = numOfChunks_;
+     retCol->count_ = count_;
+     return retCol;
+   }
 
 };
 
@@ -651,9 +683,9 @@ class IntColumn : public Column {
       std::cout << "Please enter a valid chunk index \n";
       exit(1);
     }
-    char* data = new char[1024];
-    memset(data, 0, 1025);
-    data[1023] = '\0';
+    char* data = new char[2048];
+    memset(data, 0, 2048);
+    data[2048] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       if (idx * sizeOfChunk + i >= count_) {
         break;
@@ -694,6 +726,22 @@ class IntColumn : public Column {
      for (int i = 0; i < count_; i++) {
        std::cout << "For i " << i << " = " << get(i) << "\n";
      }
+   }
+
+   virtual Column* clone() {
+     int** nElements = new int*[numOfChunks_];
+     for(size_t chunk = 0; chunk < numOfChunks_; chunk++) {
+       nElements[chunk] = new int[sizeOfChunk];
+       for(int k = 0; k < sizeOfChunk; k++) {
+         nElements[chunk][k] = elements[chunk][k];
+       }
+     }
+     IntColumn *retCol = new IntColumn();
+     delete retCol->elements;
+     retCol->elements = nElements;
+     retCol->numOfChunks_ = numOfChunks_;
+     retCol->count_ = count_;
+     return retCol;
    }
 };
 
@@ -815,9 +863,9 @@ class StringColumn : public Column {
       std::cout << "Please enter a valid chunk index \n";
       exit(1);
     }
-    char* data = new char[1024];
-    memset(data, 0, 1025);
-    data[1023] = '\0';
+    char* data = new char[2048];
+    memset(data, 0, 2048);
+    data[2048] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       if (idx * sizeOfChunk + i >= count_) {
         break;
@@ -886,5 +934,25 @@ class StringColumn : public Column {
      for (int i = 0; i < count_; i++) {
        std::cout << "For i " << i << " = " << get(i)->c_str() << "\n";
      }
+   }
+
+   virtual Column* clone() {
+     String*** nElements = new String**[numOfChunks_];
+     for(size_t chunk = 0; chunk < numOfChunks_; chunk++) {
+       nElements[chunk] = new String*[sizeOfChunk];
+       for(int k = 0; k < sizeOfChunk; k++) {
+         if (elements[chunk][k] == nullptr) {
+           nElements[chunk][k] = nullptr;
+         } else  {
+           nElements[chunk][k] = elements[chunk][k]->clone();
+         }
+       }
+     }
+     StringColumn *retCol = new StringColumn();
+     delete retCol->elements;
+     retCol->elements = nElements;
+     retCol->numOfChunks_ = numOfChunks_;
+     retCol->count_ = count_;
+     return retCol;
    }
 };

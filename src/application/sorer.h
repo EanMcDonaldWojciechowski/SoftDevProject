@@ -144,7 +144,7 @@ class SOR : public Object {
                 delete[] row;
 
             }
-            std::cout << "end infer \n";
+            // std::cout << "end infer \n";
         }
 
         // Find the start of the field value and null terminate it.
@@ -220,7 +220,9 @@ class SOR : public Object {
             size_t total_bytes = 0;
             while (fgets(buf, buff_len, f) != nullptr) {
                 total_bytes += strlen(buf);
+                // std::cout << "total bytes read " << total_bytes << " with len " << len << " with bufflen " << buff_len << "\n";
                 if (total_bytes >= len) {
+                    std::cout << "Breaking now\n";
                     break;
                 }
 
@@ -228,6 +230,8 @@ class SOR : public Object {
                 // current row could have more columns than infered - parse the frist len_ columns
                 // std::cout << "parsing row\n";
                 char** row = parse_row_(buf, &num_fields);
+                // std::cout << "row 0 is " << row[0] << "\n";
+                // std::cout << "row 1 is " << row[1] << "\n";
                 // std::cout << "parsing row ended\n";
                 // skipping rows with too few fields
                 if (num_fields == 0) {
@@ -252,8 +256,11 @@ class SOR : public Object {
                 }
 
                 // add all fields in this row to columns
+                // std::cout << "BEGINNING ROW PARSE_______________ \n";
                 for (size_t i = 0; i < len_; i++) {
+                  // std::cout << "HEREEEEEEEEEEEEEEEEEEEEEEEE\n";
                   // std::cout << "iteration " << i << " with len " << len_ << "\n";
+                  // std::cout << "row 1 is " << row[1] << "\n";
                     if (i >= num_fields || row[i] == nullptr) {
                       // std::cout << "cols_[i] = nullptr..\n";
                         cols_[i] = nullptr;
@@ -278,14 +285,21 @@ class SOR : public Object {
                         } else {
                           // std::cout << "push back S.\n";
                           String *wrap = new String(row[i]);
+                          // std::cout << "Found String: " << wrap->c_str() << " in row " << i << "\n";
                           cols_[i]->push_back(wrap);
                         }
-                        memset(pEnd, 0, 512);
+                        // std::cout << "before memset row 1 is " << row[1] << "\n";
+                        // memset(pEnd, 0, 512);
+                        // std::cout << "after memset row 1 is " << row[1] << "\n";
                     }
                 }
                 // std::cout << "Total bytes read: "<< total_bytes <<"\n";
                 delete[] row;
             }
+            // std::cout << "printing col 1 ...\n";
+            // cols_[0]->printCol();
+            // std::cout << "printing col 2 ...\n";
+            // cols_[1]->printCol();
             // std::cout << "Finished with parse 2 ...\n";
         }
 

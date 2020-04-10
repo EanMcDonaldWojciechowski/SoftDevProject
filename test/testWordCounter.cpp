@@ -3,9 +3,13 @@
 #include "../src/dataframe/modified_dataframe.h"
 
 int main(int argc, char** argv) {
-  size_t nodeIndex = 0;
 
-  WordCount *wordCounter = new WordCount(nodeIndex);
+  Args* arg = new Args();
+  arg->parse(argc, argv);
+
+  WordCount *wordCounter = new WordCount(arg);
+
+  wordCounter->run_();
 
   std::cout << "COMPLETED" << "\n";
 }

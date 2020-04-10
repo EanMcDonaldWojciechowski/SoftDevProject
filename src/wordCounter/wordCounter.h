@@ -65,32 +65,6 @@ class KeyBuff : public Object {
   }
 }; // KeyBuff
 
-class Writer : public Rower {
-public:
-  char* buf_;
-  Writer() {}
-  ~Writer() {}
-   bool isspace(char ch) {
-     if (ch == ' ') {
-       return 1;
-     } else {
-       return 0;
-     }
-   }
-   // virtual void visit(Row & r);
-   virtual bool visit(Row & r) {return 0;};
-   virtual bool done() {return 0;};
-};
-
-class Reader : public Rower {
-public:
-  Reader() {}
-  ~Reader() {}
-  // virtual void visit(Row & r);
-   virtual bool visit(Row & r) {return 0;};
-   virtual bool done() {return 0;};
-};
-
 class FileReader : public Writer {
 public:
   Args* arg;
@@ -230,34 +204,30 @@ public:
   size_t seen = 0;
 
   Summer(SIMap& map) : map_(map) {
-    // std::cout << "============================= map addy in summer\n";
-    std::cout << &map_ << "\n";
+      if (!k()) {
+          next();
+      }
   }
 
-  ~Summer() {
+  ~Summer() {}
 
-  }
-
-  virtual void next() {
+  void next() {
+      assert(!done());
       if (i == map_.capacity_ ) return;
-      if ( j < map_.items_[i].keys_->size() ) {
-          j++;
-          ++seen;
-      } else {
+      j++;
+      ++seen;
+      if ( j >= map_.items_[i].keys_->size() ) {
           ++i;
           j = 0;
-          while( i < map_.capacity_ && map_.items_[i].keys_->size() == 0 )  i++;
-          if (k()) ++seen;
+          while( i < map_.capacity_ && map_.items_[i].keys_->size() == 0 ) {
+            i++;
+          }
       }
   }
 
   String* k() {
-      if (i==map_.capacity_ || j == map_.items_[i].keys_->size()) return nullptr;
-      String *b = ((String*) (map_.items_[i].keys_->get_(j)));
-      if (b == nullptr) {
-        //std::cout << "i = " << i << " key nullptr\n";
-      } else {
-        //std::cout << "i = " << i << " key " << b->c_str() << "\n";
+      if (i==map_.capacity_ || j == map_.items_[i].keys_->size()) {
+          return nullptr;
       }
       return (String*) (map_.items_[i].keys_->get_(j));
   }
@@ -270,29 +240,17 @@ public:
   }
 
   virtual bool visit(Row& r) {
-      // std::cout << " if k() : " << (k()==nullptr) << "\n";
-      // std::cout << " IN VISITTTT with map addy : " << &map_ << "\n";
-      if (!k()) {
-        next();
-      }
       String & key = *k();
-      //String* key = k();
       size_t value = v();
-
-      // std::cout << "key: " << key.c_str() << " num: " << value << "\n";
-
-      // std::cout << "iside summer before set \n";
       r.set(0, &key);
       r.set(1, (int) value);
-      // std::cout << "iside summer after set \n";
       next();
       return 1;
   }
 
-  virtual bool done() {
-    // std::cout << "seen and map size : " << seen << " " << map_.size() << "\n";
-    return seen == map_.size();
-  }
+  bool done() {
+        return seen == map_.size();
+    }
 };
 
 class Application : public Object {
@@ -388,7 +346,7 @@ public:
   //   Summer cnt(map);
   //   delete DataFrame::fromVisitor(mk_key(nodeIndex), &kv, "SI", cnt);
   // }
-  virtual void local_count();
+  void local_count();
 
   /** Merge the data frames of all nodes */
   void reduce() {
@@ -412,5 +370,5 @@ public:
   //   df->map(add);
   //   delete df;
   // }
-  virtual void merge(DataFrame* df, SIMap& m);
+  void merge(DataFrame* df, SIMap& m);
 }; // WordcountDemo

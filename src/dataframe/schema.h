@@ -23,10 +23,13 @@ class Schema : public Object {
 
   /** Create an empty schema **/
   Schema() {
+
     rowSize_ = 0;
     colSize_ = 0;
     colCap_ = 2;
-    colType = new char[0];
+    colType = new char[1024];
+    memset(colType, 0, 1024);
+    // std::cout << "schema constructor DEFAULT DEFAULT DEFAULT \n\n " << colType << "\n";
   }
 
   /** Create a schema from a string of types. A string that contains
@@ -37,25 +40,32 @@ class Schema : public Object {
     rowSize_ = strlen(types);
     colSize_ = 0;
     colCap_ = 2;
-    char* scmTypes = new char[strlen(types) + 1];
+    char* scmTypes = new char[strlen(types)];
+    memset(scmTypes, 0, strlen(types));
     strcpy(scmTypes, types);
-    scmTypes[strlen(types) + 1] = '\0';
+    scmTypes[strlen(types)] = '\0';
     colType = scmTypes;
-    // std::cout << "schema constructor using char* " << colType << "\n";
+    // std::cout << "schema constructor using char* \n\n" << colType << "\n";
   }
 
   /** Add a column of the given type and name (can be nullptr), name
     * is external. Names are expectd to be unique, duplicates result
     * in undefined behavior. */
   void add_column(char typ) {
+    // std::cout << "BEFORE ADDING COL OF TYPE " << typ << " " << "coltypes: " << colType << "\n";
     char *copyType = new char[rowSize_ + 1];
+    memset(copyType, 0, rowSize_ + 1);
     for (int i = 0; i < rowSize_; i++) {
+        // std::cout << "i = " << i << ": adding " << colType[i] << " to copy with row size " << rowSize_ << " \n";
         copyType[i] = colType[i];
     }
+    // std::cout << "MIDDLE ADDING COL OF TYPE " << typ << " " << "coltypes: " << colType << "\n";
     copyType[rowSize_] = typ;
+    copyType[rowSize_ + 1] = '\0';
 		rowSize_++;
     delete[] colType;
     colType = copyType;
+    // std::cout << "ADDING COL OF TYPE " << typ << " " << "coltypes: " << colType << "\n";
   }
 
   /** Add a row with a name (possibly nullptr), name is external.  Names are
