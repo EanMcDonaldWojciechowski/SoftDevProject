@@ -473,7 +473,7 @@ public:
             memset(buffer, 0, 2048);
             int ret = recv(sd, (char *)buffer, sizeof(buffer), 0);
             if(ret > 0) {
-                // printf("Message received from socket %d : %s \n", sd, buffer);
+                printf("Message received from socket %d : %s \n", sd, buffer);
                 receivedMessage(buffer, sd);
             }
           }

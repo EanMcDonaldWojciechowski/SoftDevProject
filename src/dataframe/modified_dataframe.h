@@ -522,7 +522,7 @@ class DataFrame : public Object {
     }
     SOR* reader = new SOR();
     // reader->read(f, 0, 5000000000);
-    reader->read(f, 0, 500000);
+    reader->read(f, 0, 5000000);
     // reader->cols_[0]->printCol();
     std::cout << "reading file" << "\n";
     DataFrame *df = reader->sorToDataframe();
@@ -590,7 +590,7 @@ void KVStore::put(Key *k, DataFrame *v) {
   }
 
   char* chunkStoreKey = new char[1024];
-  memset(chunkStoreKey, 0, 1025);
+  memset(chunkStoreKey, 0, 1024);
   strcat(chunkStoreKey, k->key);
   strcat(chunkStoreKey, "_DONE");
   Value *dataValFinal = new Value(colType);
@@ -656,12 +656,12 @@ DataFrame* KVStore::get(Key *k) {
 
 DataFrame* KVStore::waitAndGet(Key *k) {
   char* colKeyChar = new char[1024];
-  memset(colKeyChar, 0, 1025);
+  memset(colKeyChar, 0, 1024);
   strcat(colKeyChar, k->key);
   strcat(colKeyChar, "_DONE");
   Key *chunkKey = new Key(colKeyChar, k->nodeIndex);
   std::cout << "BEFORE WAITING FOR END KEY " << colKeyChar << " \n";
-  store->store->printall();
+  // store->store->printall();
   while(!store->waitForKey(chunkKey)) {
     continue;
   }
@@ -714,6 +714,10 @@ void ChunkStore::put(Key *k, DataFrame *v) {
   char* data = col->serializeMetadata();
   char* val;
   for (int i = 0; i < col->getNumChunks(); i++) {
+    if (i >= ((col->size() / col->getSizeOfChunk()) + 1)) {
+      std::cout << "Breaking in chunkstore put bc read all data when i is " << i << " >=  col->size " << col->size() << " and chunkSize is " << col->getSizeOfChunk() << "\n";
+      break;
+    }
     int storeClientLocation = i % num_nodes;
     Key *chunkKey = getChunkKey(k, storeClientLocation, i);
     std::cout<< "chunk store getChunkKey for i = " << i << " chunkKey: " << chunkKey->key << "\n";
@@ -738,6 +742,8 @@ void ChunkStore::put(Key *k, DataFrame *v) {
   char* chunkStoreKey = constructEndKey(k);
 
   char *finalVal = new char[2];
+  memset(finalVal, 0, 2);
+  finalVal[1] = '\0';
   finalVal[0] = col->get_type();
   Value *dataValFinal = new Value(finalVal);
   for (int i = 0; i < num_nodes; i++) {
@@ -964,7 +970,8 @@ Value* ChunkStore::getChunkVal(size_t chunkNum, Key *chunkKey) {
     Key *gotKey = new Key(keyVal, nodeIndex);
     std::cout << "waiting for rsp : ...\n";
     while(!waitForKey(gotKey)) {
-      continue;
+      std::cout << "Resending messages : ...\n";
+      client->sendMessage(basePort + whichNode, data);
     }
     chunkData = dynamic_cast<Value*>(store->get(gotKey));
     store->remove(gotKey);

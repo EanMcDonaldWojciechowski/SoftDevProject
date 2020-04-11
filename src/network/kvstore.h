@@ -74,10 +74,11 @@ public:
 
   char* constructEndKey(Key *k) {
     char* chunkStoreKey = new char[1024];
-    memset(chunkStoreKey, 0, 1025);
+    memset(chunkStoreKey, 0, 1024);
     strcat(chunkStoreKey, k->key);
     strcat(chunkStoreKey, "_");
-    char nodeIdxChar[256];
+    char *nodeIdxChar = new char[256];
+    memset(nodeIdxChar, 0, 256);
     snprintf(nodeIdxChar,sizeof(k->nodeIndex), "%d", k->nodeIndex);
     strcat(chunkStoreKey, nodeIdxChar);
     strcat(chunkStoreKey, "_END");

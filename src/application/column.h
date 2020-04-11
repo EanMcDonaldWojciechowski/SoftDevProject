@@ -106,6 +106,10 @@ class Column : public Object {
     return data;
   }
 
+  virtual size_t getSizeOfChunk() {
+    return 0;
+  }
+
   /** Return the type of this column as a char: 'S', 'B', 'I' and 'F'. **/
   virtual char get_type() { return 'N';}
   // get string rep of element at ith index
@@ -205,6 +209,10 @@ class BoolColumn : public Column {
 
   char get_type() {
     return 'B';
+  }
+
+  size_t getSizeOfChunk() {
+    return sizeOfChunk;
   }
 
   char get_enum_type() {
@@ -428,6 +436,10 @@ class FloatColumn : public Column {
     return 'F';
   }
 
+  size_t getSizeOfChunk() {
+    return sizeOfChunk;
+  }
+
   char get_enum_type() {
     return type_float;
   }
@@ -642,6 +654,11 @@ class IntColumn : public Column {
     return 'I';
   }
 
+
+  size_t getSizeOfChunk() {
+    return sizeOfChunk;
+  }
+
   char get_enum_type() {
     return type_int;
   }
@@ -688,10 +705,14 @@ class IntColumn : public Column {
     data[2048] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       if (idx * sizeOfChunk + i >= count_) {
+        std::cout << "In IntCol serChunk breaking out of loop \n";
         break;
       }
-      char doubleChar[256];
-      snprintf(doubleChar,sizeof(elements[idx][i]), "%d", elements[idx][i]);
+      char *doubleChar = new char[1024];
+      memset(doubleChar, 0, 1024);
+      std::cout << "Trying to serialize number " << elements[idx][i] << " size of " << sizeof(elements[idx][i]) << "\n";
+      snprintf(doubleChar, 8, "%d", elements[idx][i]);
+      std::cout << "Serialized number " << doubleChar << "\n";
       strcat(data, doubleChar);
       strcat(data, "}");
     }
@@ -850,6 +871,11 @@ class StringColumn : public Column {
 
   char get_type() {
     return 'S';
+  }
+
+
+  size_t getSizeOfChunk() {
+    return sizeOfChunk;
   }
 
   char get_enum_type() {
