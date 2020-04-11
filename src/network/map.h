@@ -80,9 +80,11 @@ class Value : public Object {
 
    char* dataToSend(Key* key) {
      // std::cout << "value before: " << value << "\n";
-     char* data = new char[2048];
-     data[2048] = '\0';
-     char doubleChar[256];
+     char* data = new char[4096];
+     memset(data, 0, 4096);
+     data[4096] = '\0';
+     char *doubleChar = new char[256];
+     memset(doubleChar, 0, 256);
      strcat(data, "PUT}");
      // std::cout << "this is key: " << key->key << "\n";
      strcat(data, key->key);
@@ -94,17 +96,20 @@ class Value : public Object {
 
    char* dataToRetrieve(Key* key, size_t chunkNum) {
      // std::cout << "value before: " << value << "\n";
-     char* data = new char[2048];
-     data[2048] = '\0';
+     char* data = new char[4096];
+     memset(data, 0, 4096);
+     data[4096] = '\0';
      strcat(data, "GET}");
      // std::cout << "this is key: " << key->key << "\n";
      strcat(data, key->key);
      strcat(data, "_");
-     char doubleChar[256];
+     char *doubleChar = new char[256];
+     memset(doubleChar, 0, 256);
      snprintf(doubleChar,sizeof(key->nodeIndex), "%d", key->nodeIndex);
      strcat(data, doubleChar);
      strcat(data, "_");
-     char iIdxChar[256];
+     char *iIdxChar = new char[256];
+     memset(iIdxChar, 0, 256);
      snprintf(iIdxChar,sizeof(chunkNum), "%d", chunkNum);
      strcat(data, iIdxChar);
      strcat(data, "}");
@@ -129,7 +134,8 @@ class Hashmap_pair : public Object {
 
         Hashmap_pair(Key *key, Value *val) : Object() {
             key_ = key;
-            char *valPayload = new char[2048];
+            char *valPayload = new char[4096];
+            memset(valPayload, 0, 4096);
             strcpy(valPayload, val->value);
             val_ = new Value(valPayload);
         }
@@ -154,9 +160,9 @@ class Hashmap : public Object {
         //constructor
         //capcity will be initilized as 4, size is 0 by default.
         Hashmap() {
-            data = new Hashmap_pair*[4096];
+            data = new Hashmap_pair*[512];
             size_ = 0;
-            capacity_ = 4096;
+            capacity_ = 512;
             hash_code = 0;
             for (size_t i = 0; i < capacity_; i++) {
               data[i] = nullptr;
@@ -264,6 +270,7 @@ class Hashmap : public Object {
 
         // Associates the specified value with the specified key in this map.
         virtual void put(Object *key, Object *val) {
+          std::cout << "MAP size " << size_ << " capacity_ = " << capacity_ << "\n";
           // std::cout << "Before expanding hashKey " << (key->hash() % capacity_) << " capacity_ " << capacity_ << "\n";
           if ((size_ + 1) * 2 > capacity_) {
             // std::cout << "expanding......\n";

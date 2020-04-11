@@ -889,9 +889,9 @@ class StringColumn : public Column {
       std::cout << "Please enter a valid chunk index \n";
       exit(1);
     }
-    char* data = new char[2048];
-    memset(data, 0, 2048);
-    data[2048] = '\0';
+    char* data = new char[4096];
+    memset(data, 0, 4096);
+    data[4096] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       if (idx * sizeOfChunk + i >= count_) {
         break;
@@ -911,6 +911,7 @@ class StringColumn : public Column {
     char* keyChar = new char[256];
     memset(keyChar, 0, 256);
     String* val;
+    std::cout << "IN STRING COL strlen(data) is " << strlen(data) << "\n";
     for (int i = 0; i < strlen(data); i++) {
       if (data[i] == '}') {
         val = new String(keyChar);

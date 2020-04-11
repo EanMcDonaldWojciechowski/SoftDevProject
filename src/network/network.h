@@ -119,7 +119,7 @@ class Server {
 
        // Reading client information
        int nPort;
-       if((valread = read( new_socket , buffer, 2048) > 0)) {
+       if((valread = read( new_socket , buffer, 4096) > 0)) {
          printf("Got information from Client: %s\n", buffer);
          struct sockaddr_in neighbor;
          neighbor.sin_family = AF_INET;
@@ -173,16 +173,19 @@ class Server {
             continue;
           }
 
-          char* header = new char[4];
+          char* header = new char[256];
+          memset(header, 0, 256);
           struct sockaddr_in client_addr = actualClientRoutes[j];
           strcpy(header, "IP:");
           char* thisaddress = new char[10]; // "127.0.0.1"
+          memset(thisaddress, 0, 10);
           char* actualAddress = inet_ntoa(client_addr.sin_addr);
           strcpy(thisaddress, actualAddress);
           strcat(header, thisaddress);
           strcat(header, " P:");
           int thisport = ntohs(client_addr.sin_port);
           char thisportchar[6];
+          memset(thisportchar, 0, 6);
           sprintf(thisportchar, "%d", thisport);
           strcat(header, thisportchar);
 
@@ -249,7 +252,7 @@ public:
   int valread;
   struct sockaddr_in serv_addr;
   struct sockaddr_in my_addr;
-  char buffer[2048] = {0};
+  char buffer[4096] = {0};
   bool online = TRUE;
   int opt = TRUE;
   int currSocket;
@@ -359,7 +362,7 @@ public:
     std::cout << "Sending to server my info: " << header << "\n";
 
     for (int k = 0; k < num_nodes - 1; k++) {
-      if((valread = read( sock , buffer, 2048) > 0)) {
+      if((valread = read( sock , buffer, 4096) > 0)) {
         printf("Got information from Server: %s\n", buffer);
         struct sockaddr_in neighbor;
         neighbor.sin_family = AF_INET;
@@ -379,7 +382,7 @@ public:
       	}
         neighborRoutes[numNeighbors] = neighbor;
         numNeighbors++;
-        memset(buffer, 0, 2048);
+        memset(buffer, 0, 4096);
       }
     }
 
@@ -394,7 +397,7 @@ public:
     while((new_peer = accept(currSocket, (struct sockaddr *)&peer_addr, (socklen_t*)&peer_addr)) > 0) {
       printf("Peer connection in client , socket fd is %d , ip is : %s , port : %d\n" ,
       new_peer , inet_ntoa(peer_addr.sin_addr) , ntohs(peer_addr.sin_port));
-      valread = read( new_peer , buffer, 2048);
+      valread = read( new_peer , buffer, 4096);
       char* pEnd;
       size_t spotInArray = strtol(buffer, &pEnd, 10);
       std::cout << "INIT other client's port: " << spotInArray << " received on socket " << new_peer << "\n";
@@ -436,7 +439,7 @@ public:
         printf("\nConnection Failed \n");
         exit(1);
       }
-      char *data = new char[2048];
+      char *data = new char[4096];
       char returnChar[256];
       snprintf(returnChar, 8, "%d", myPort);
       strcat(data, returnChar);
@@ -470,7 +473,7 @@ public:
         for (int k = 0; k < numNeighbors; k++) {
           int sd = recSockets[k];
           if (FD_ISSET(sd, &fdread)) {
-            memset(buffer, 0, 2048);
+            memset(buffer, 0, 4096);
             int ret = recv(sd, (char *)buffer, sizeof(buffer), 0);
             if(ret > 0) {
                 printf("Message received from socket %d : %s \n", sd, buffer);
@@ -484,6 +487,7 @@ public:
 
   void receivedMessage(char* message, int sd) {
     char* msgType = new char[4];
+    memset(msgType, 0, 4);
     msgType[3] = '\0';
 
     for (int i = 0; i < 3; i++) {
@@ -494,6 +498,9 @@ public:
       storeLocal(message);
     } else if (strcmp(msgType, "GET") == 0) {
       retrieveLocal(message, sd);
+    } else {
+      std::cout << "NETWORK ERROR: Found an unrecognized message: " << message << "\n";
+      exit(1);
     }
   }
 
@@ -501,6 +508,7 @@ public:
     int i;
     Key *k;
     char* keyChar = new char[256];
+    memset(keyChar, 0, 256);
     for (i = 4; i < strlen(message); i++) {
       if (message[i] == '}') {
           k = new Key(keyChar, myPort - 8810);
@@ -510,13 +518,16 @@ public:
       theval[0] = message[i];
       strcat(keyChar, theval);
     }
-    char val[2048];
+    char* val = new char[4098];
+    memset(val, 0, 4098);
     memcpy(val, &message[i + 1], (strlen(message) - i + 1));
     val[strlen(message) - i + 1] = '\0';
     Value *v = new Value(val);
     store->put(k, v);
+    // std::cout << "in network after put...\n";
     // store->printall();
-    memset(message, 0, 2048);
+    memset(message, 0, 4096);
+    // std::cout << "in network done with storelocal...\n";
   }
 
   void retrieveLocal(char* message, int sd) {
@@ -531,7 +542,9 @@ public:
     }
 
     char* keyChar = new char[256];
+    memset(keyChar, 0 , 256);
     Key *k;
+    std::cout << "Looking for key in message " << message << "\n";
     for (int i = 4; i < strlen(message); i++) {
       if (message[i] == '}') {
           k = new Key(keyChar, myPort - 8810);
@@ -542,13 +555,15 @@ public:
       strcat(keyChar, theval);
     }
     char *keyVal = new char[4];
+    memset(keyVal, 0, 4);
     strcat(keyVal, "RSP");
     // store->printall();
+    std::cout << "Looking for key " << k->key << "\n";
     Value *v = dynamic_cast<Value*>(store->get(k));
+    std::cout << "Found value for key " << k->key << " : " << v->value << "\n";
     Key *tempKey = new Key(keyVal, myPort - 8810);
     char* returnMsg = v->dataToSend(tempKey);
     usleep(10000);
-
     sendMessage(sendToPort, returnMsg);
   }
 

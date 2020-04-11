@@ -522,7 +522,7 @@ class DataFrame : public Object {
     }
     SOR* reader = new SOR();
     // reader->read(f, 0, 5000000000);
-    reader->read(f, 0, 5000000);
+    reader->read(f, 0, 500000);
     // reader->cols_[0]->printCol();
     std::cout << "reading file" << "\n";
     DataFrame *df = reader->sorToDataframe();
@@ -730,6 +730,7 @@ void ChunkStore::put(Key *k, DataFrame *v) {
     } else if (col->get_type() == 'S') {
       val = col->as_string()->serializeChunk(i);
     }
+    std::cout<< "serialized chunk\n";
     if (i == 0) {
       strcat(data, val);
       Value *dataVal = new Value(data);
@@ -746,10 +747,10 @@ void ChunkStore::put(Key *k, DataFrame *v) {
   finalVal[1] = '\0';
   finalVal[0] = col->get_type();
   Value *dataValFinal = new Value(finalVal);
-  for (int i = 0; i < num_nodes; i++) {
-    Key *chunkKeyFinal = new Key(chunkStoreKey, i);
-    std::cout<< "chunk store constructEndKey for i = " << i << " key: " << chunkKeyFinal->key << "\n";
-      std::cout<< "with values: " << finalVal << "\n";
+  for (int k = 0; k < num_nodes; k++) {
+    Key *chunkKeyFinal = new Key(chunkStoreKey, k);
+    std::cout<< "chunk store constructEndKey for k = " << k << " key: " << chunkKeyFinal->key << "\n";
+    std::cout<< "with values: " << finalVal << "\n";
     sendInfo(chunkKeyFinal, dataValFinal);
   }
 }
