@@ -58,7 +58,7 @@ public:
     std::cout << "Adding one to neighborMapSizes " << chunkKey->nodeIndex << " with current value " << neighborMapSizes[chunkKey->nodeIndex] << " and capacity " << neighborMapCapacity[chunkKey->nodeIndex] << "\n";
     neighborMapSizes[chunkKey->nodeIndex]++;
     if (chunkKey->nodeIndex == nodeIndex) {
-      // std::cout << "Storing locally on key " << chunkKey->key << " with values " << val->value << "\n";
+      std::cout << "Storing locally on key " << chunkKey->key << " with values " << val->value << "\n";
       store->put(chunkKey, val);
     } else {
       client->sendMessage(basePort + chunkKey->nodeIndex, val->dataToSend(chunkKey));

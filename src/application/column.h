@@ -91,7 +91,7 @@ class Column : public Object {
     memset(data, 0, 2048);
     data[2048] = '\0';
     char chunkNum[1024];
-    snprintf(chunkNum, sizeof(getNumChunks()), "%d", getNumChunks());
+    snprintf(chunkNum, sizeof(getSizeOfFilledChunks()), "%d", getSizeOfFilledChunks());
     strcat(data, chunkNum);
     strcat(data, "}");
     char doubleChar[1024];
@@ -108,6 +108,9 @@ class Column : public Object {
 
   virtual size_t getSizeOfChunk() {
     return 0;
+  }
+  virtual size_t getSizeOfFilledChunks() {
+    return (size() / getSizeOfChunk()) + 1;
   }
 
   /** Return the type of this column as a char: 'S', 'B', 'I' and 'F'. **/

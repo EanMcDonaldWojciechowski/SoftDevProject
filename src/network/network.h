@@ -324,7 +324,7 @@ public:
     }
     usleep(10000);
     send(clientSock , msg , strlen(msg) , 0);
-    // std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
+    std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
   }
 
   void connectToServer() {
