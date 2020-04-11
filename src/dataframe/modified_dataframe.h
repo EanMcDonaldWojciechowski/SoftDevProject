@@ -522,7 +522,7 @@ class DataFrame : public Object {
     }
     SOR* reader = new SOR();
     // reader->read(f, 0, 5000000000);
-    reader->read(f, 0, 50000);
+    reader->read(f, 0, 500000);
     // reader->cols_[0]->printCol();
     std::cout << "reading file" << "\n";
     DataFrame *df = reader->sorToDataframe();
@@ -536,9 +536,10 @@ class DataFrame : public Object {
 
 
 void KVStore::put(Key *k, DataFrame *v) {
+  std::cout<<"KVSTORE put INITIAL KEY : " << k->key << "\n";
   size_t numCols = v->scm->width();
 
-  std::cout<<"first numCol: " << numCols << "\n";
+
 
   char *colType = v->scm->colType;
   std::cout<<"colTypecolTypecolTypecolTypecolType: " << colType << "\n";
@@ -581,6 +582,7 @@ void KVStore::put(Key *k, DataFrame *v) {
     // std::cout << "ith col i = " << i << " has the following type " << v->column[i]->get_type() << "\n";
 
     colKey = new Key(colKeyChar, k->nodeIndex);
+    std::cout<< "kvstore ith col = " << i <<" KEY : " << colKey->key << "\n";
     // std::cout<<"forth\n";
     store->put(colKey, colDf);
     delete colDf;
@@ -594,6 +596,7 @@ void KVStore::put(Key *k, DataFrame *v) {
   Value *dataValFinal = new Value(colType);
   for (int i = 0; i < num_nodes; i++) {
     Key *chunkKeyFinal = new Key(chunkStoreKey, i);
+    std::cout<< "kvstore ith col = " << i <<" done KEY : " << chunkKeyFinal->key << "\n";
     usleep(10000);
     store->sendInfo(chunkKeyFinal, dataValFinal);
   }
@@ -605,20 +608,23 @@ DataFrame* KVStore::get(Key *k) {
   //   std::cout << "Key doesn't exist. \n";
   //   exit(1);
   // }
-
+  std::cout<< "kvstore getting main key " << k->key << "\n";
   char* colKeyChar = new char[1024];
   memset(colKeyChar, 0, 1025);
   strcat(colKeyChar, k->key);
   strcat(colKeyChar, "_DONE");
   Key *chunkKey = new Key(colKeyChar, nodeIndex);
+  std::cout<< "kvstore getting chunkKey key " << chunkKey->key << "\n";
   // std::cout<<"Looking for key " << colKeyChar << " with nodeidx " << nodeIndex << "\n";
-  store->waitForKey(chunkKey);
-  // std::cout<<"FOUND KEY MOVING ON \n";
+  while(!store->waitForKey(chunkKey)) {
+    continue;
+  }
+  std::cout<<"FOUND KEY MOVING ON \n";
   Schema *colS = new Schema();
   DataFrame *retDf = new DataFrame(*colS);
 
   Value *metaValue = dynamic_cast<Value*>(store->store->get(chunkKey));
-  // std::cout<<"GOT Metadata \n";
+  std::cout<<"GOT Metadata \n";
   String *colTypes = new String(metaValue->value);
 
   char type;
@@ -655,22 +661,27 @@ DataFrame* KVStore::waitAndGet(Key *k) {
   strcat(colKeyChar, "_DONE");
   Key *chunkKey = new Key(colKeyChar, k->nodeIndex);
   std::cout << "BEFORE WAITING FOR END KEY " << colKeyChar << " \n";
-  store->waitForKey(chunkKey);
+  store->store->printall();
+  while(!store->waitForKey(chunkKey)) {
+    continue;
+  }
   std::cout << "AFTER WAITING FOR END KEY \n";
 
   Schema *colS = new Schema();
   DataFrame *retDf = new DataFrame(*colS);
 
   std::cout << "BEFORE get " << chunkKey->key << " \n";
-  DataFrame *metaDF = store->get(chunkKey);
-  std::cout << "After get" << chunkKey->key << " \n";
-  String *colTypes = metaDF->get_string(0,0);
+  // DataFrame *metaDF = store->get(k);
+  Value *metaValue = dynamic_cast<Value*>(store->store->get(chunkKey));
+  std::cout<<"GOT Metadata \n";
+  // String *colTypes = metaDF->get_string(0,0);
+  char *colTypes = metaValue->value;
 
   char type;
   DataFrame *singleColDF;
   Key *colKey;
-  for (int i = 0; i < strlen(colTypes->c_str()); i++) {
-    type = colTypes->c_str()[i];
+  for (int i = 0; i < strlen(colTypes); i++) {
+    type = colTypes[i];
     // std::cout << "finding column #" << i << " type " << type << "\n";
 
     char* colKeyChar = new char[1024];
@@ -686,7 +697,7 @@ DataFrame* KVStore::waitAndGet(Key *k) {
     typeStr[1] = '\0';
     strcat(colKeyChar, typeStr);
     colKey = new Key(colKeyChar, k->nodeIndex);
-
+    std::cout << "In KVStore wait and get.. waiting for key " << colKeyChar << " \n";
     singleColDF = store->waitAndGet(colKey);
     retDf->add_column(singleColDF->column[0]);
   }
@@ -696,6 +707,8 @@ DataFrame* KVStore::waitAndGet(Key *k) {
 
 
 void ChunkStore::put(Key *k, DataFrame *v) {
+  std::cout<< "chunk store initial key " << k->key << "\n";
+
   Column* col = v->column[0];
   // std::cout << "inside CS put col has type " << v->column[0]->get_type() << "\n";
   char* data = col->serializeMetadata();
@@ -703,6 +716,7 @@ void ChunkStore::put(Key *k, DataFrame *v) {
   for (int i = 0; i < col->getNumChunks(); i++) {
     int storeClientLocation = i % num_nodes;
     Key *chunkKey = getChunkKey(k, storeClientLocation, i);
+    std::cout<< "chunk store getChunkKey for i = " << i << " chunkKey: " << chunkKey->key << "\n";
     if (col->get_type() == 'I') {
       val = col->as_int()->serializeChunk(i);
     } else if (col->get_type() == 'B') {
@@ -722,20 +736,26 @@ void ChunkStore::put(Key *k, DataFrame *v) {
     }
   }
   char* chunkStoreKey = constructEndKey(k);
+
   char *finalVal = new char[2];
   finalVal[0] = col->get_type();
   Value *dataValFinal = new Value(finalVal);
   for (int i = 0; i < num_nodes; i++) {
     Key *chunkKeyFinal = new Key(chunkStoreKey, i);
+    std::cout<< "chunk store constructEndKey for i = " << i << " key: " << chunkKeyFinal->key << "\n";
+      std::cout<< "with values: " << finalVal << "\n";
     sendInfo(chunkKeyFinal, dataValFinal);
   }
 }
 
 DataFrame* ChunkStore::get(Key *k) {
+  std::cout << "In chunkstore get main key " << k->key << "\n";
   char* endKey = constructEndKey(k);
   Key *finalKey = new Key(endKey, k->nodeIndex);
   std::cout << "In chunkstore get waiting for key " << finalKey->key << "\n";
-  waitForKey(finalKey);
+  while(!waitForKey(finalKey)) {
+    continue;
+  }
   Value *finalVal = dynamic_cast<Value*>(store->get(finalKey));
   Column *col;
   if (finalVal->value[0] == 'I') {
@@ -763,12 +783,12 @@ DataFrame* ChunkStore::get(Key *k) {
   Key** subKeys = store->getSubKeys(parentKey);
   size_t i = 0;
   Value *chunkVal;
+  std::cout << "firstChunkStoreKey is " << firstChunkStoreKey << "\n";
   while (subKeys[i] != nullptr) {
     chunkVal = dynamic_cast<Value*>(store->get(subKeys[i]));
-    // std::cout << "Looking for key: " << subKeys[i]->key << "\n";
+    std::cout << "Looking for subkey: " << subKeys[i]->key << "\n";
 
     // std::cout << "Print i " << i << "\n";
-    // std::cout << "firstChunkStoreKey is " << firstChunkStoreKey << "\n";
     if (strcmp(subKeys[i]->key, firstChunkStoreKey) == 0) {
       // std::cout << "Print ChunkVal 0 before taking off metadata: " << chunkVal->value << "\n";
       size_t fieldNum = 0;
@@ -811,23 +831,38 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
   Key *firstChunkKey = getChunkKey(k, k->nodeIndex, 0);
 
   if (nodeIndex == 0) {
-    waitForKey(firstChunkKey);
+    std::cout << "Chunk store WaitandGet waiting for key " << firstChunkKey->key << "\n";
+    while(!waitForKey(firstChunkKey)) {
+      continue;
+    }
+    std::cout << "Found the key...\n";
     firstChunk = dynamic_cast<Value*>(store->get(firstChunkKey));
+    std::cout << "Retrieved the key...\n";
   } else {
+    std::cout << "starting else ...\n";
     char* data = new char[1024];
+    memset(data, 0, 1024);
     strcat(data, "GET}");
     strcat(data, firstChunkKey->key);
     strcat(data, "}");
+    std::cout << "Chunk store WaitandGet requesting key " << firstChunkKey->key << "\n";
     client->sendMessage(basePort + 0, data);
 
     char *keyVal = new char[4];
     memset(keyVal, 0, 4);
     strcat(keyVal, "RSP");
     Key *gotKey = new Key(keyVal, nodeIndex);
-    waitForKey(gotKey);
+    std::cout << "waiting for rsp ...\n";
+    while (!waitForKey(gotKey)) {
+      std::cout << "5 seconds has expired, resending ...\n";
+      client->sendMessage(basePort + 0, data);
+     }
+
     firstChunk = dynamic_cast<Value*>(store->get(gotKey));
+    std::cout << "Found the key RSP...\n";
     usleep(10000);
     store->remove(gotKey);
+    std::cout << "removing rsp...\n";
   }
 
   size_t numChunks;
@@ -836,6 +871,7 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
   char* keyChar = new char[256];
   size_t fieldNum = 0;
   int i;
+  std::cout << "Parsing metadata ...\n";
   for (i = 0; i < strlen(firstChunk->value); i++) {
     if (firstChunk->value[i] == '}') {
       if (fieldNum == 0) {
@@ -863,7 +899,7 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
   char *val = new char[1024];
   memcpy(val, &firstChunk->value[i + 1], (strlen(firstChunk->value) - i + 1));
 
-
+  std::cout << "building  columns ...\n";
   Column *col;
   if (colType == 'I') {
     col = new IntColumn();
@@ -878,13 +914,14 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
     col = new StringColumn();
     col->as_string()->deserializeChunk(val);
   }
+  std::cout << "deserialized chunk ...\n";
 
   Key *chunkKey;
   char* chunkKeyText = new char[1024];
   for (int j = 1; j < numChunks; j++) {
     chunkKey = getChunkKey(k, k->nodeIndex, j);
     Value *chunkVal = getChunkVal(j, chunkKey);
-
+    std::cout << "got value from getChunkVal ...\n";
     if (colType == 'I') {
       col->as_int()->deserializeChunk(chunkVal->value);
     } else if (colType == 'B') {
@@ -899,40 +936,53 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
   Schema *s = new Schema();
   DataFrame *retdf = new DataFrame(*s);
   retdf->add_column(col);
+  std::cout << "returning dataframe ...\n";
   return retdf;
 }
 
 Value* ChunkStore::getChunkVal(size_t chunkNum, Key *chunkKey) {
+  std::cout << "inside get chunk val ...\n";
   Value *chunkData;
   size_t whichNode = chunkNum % num_nodes;
   if (nodeIndex == whichNode) {
-    waitForKey(chunkKey);
+    std::cout << "waiting for chunkKey " << chunkKey->key << " ...\n";
+    while(!waitForKey(chunkKey)) {
+      continue;
+    }
     chunkData = dynamic_cast<Value*>(store->get(chunkKey));
   } else {
     char* data = new char[1024];
+    memset(data, 0, 1024);
     strcat(data, "GET}");
     strcat(data, chunkKey->key);
     strcat(data, "}");
+    std::cout << "sending get msg : " << data << " ...\n";
     client->sendMessage(basePort + whichNode, data);
     char *keyVal = new char[4];
     memset(keyVal, 0, 4);
     strcat(keyVal, "RSP");
     Key *gotKey = new Key(keyVal, nodeIndex);
-    waitForKey(gotKey);
+    std::cout << "waiting for rsp : ...\n";
+    while(!waitForKey(gotKey)) {
+      continue;
+    }
     chunkData = dynamic_cast<Value*>(store->get(gotKey));
     store->remove(gotKey);
+    std::cout << "done ...\n";
   }
   return chunkData;
 }
 
-void ChunkStore::waitForKey(Key* k) {
+bool ChunkStore::waitForKey(Key* k) {
+  size_t i = 0;
   while (!store->keyExists(k)) {
+    i++;
     usleep(500000);
-
-    // std::cout << "WAITING FOR KEY " << k->key <<" --------- \n";
-    // store->printall();
-    // std::cout << "---------- --------- \n";
+    if (i >= 20) {
+      return 0;
+    }
   }
+  return 1;
 }
 
 

@@ -315,7 +315,8 @@ class Hashmap : public Object {
         virtual void printall() {
           for (size_t i = 0; i < capacity_; i++) {
             if (data[i] == nullptr) {
-              std::cout << i << ": null \n";
+              continue;
+              // std::cout << i << ": null \n";
             }
             else {
               Key *castedO = dynamic_cast<Key*>(data[i]->key_);

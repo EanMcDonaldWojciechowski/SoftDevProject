@@ -9,6 +9,7 @@ int main(int argc, char** argv) {
 
   Linus *linus = new Linus(arg);
   linus->run_();
+  sleep(10);
 
   std::cout << "COMPLETED" << "\n";
 }

@@ -42,7 +42,7 @@ public:
 
   DataFrame* get(Key *k);
 
-  void waitForKey(Key* k);
+  bool waitForKey(Key* k);
 
   Value* getChunkVal(size_t chunkNum, Key *ChunkKey);
 

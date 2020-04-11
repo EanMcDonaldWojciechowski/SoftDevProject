@@ -302,7 +302,7 @@ public:
   *  datafrrames (projects, users, commits), the sets of tagged users and
   *  projects, and the users added in the previous round. */
   void step(int stage) {
-    kv->store->store->printall();
+    // kv->store->store->printall();
     // std::cout << "inside STEP \n";
     // std::cout << "Stage \n" << stage << "\n";
     // Key of the shape: users-stage-0
