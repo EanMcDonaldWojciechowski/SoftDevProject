@@ -522,7 +522,7 @@ class DataFrame : public Object {
     }
     SOR* reader = new SOR();
     // reader->read(f, 0, 5000000000);
-    reader->read(f, 0, 5000000);
+    reader->read(f, 0, 500000);
     // reader->cols_[0]->printCol();
     std::cout << "reading file" << "\n";
     DataFrame *df = reader->sorToDataframe();
@@ -874,9 +874,9 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
     Key *gotKey = new Key(keyVal, nodeIndex);
     std::cout << "waiting for rsp ...\n";
     while (!waitForKey(gotKey)) {
-      // std::cout << "1 seconds has expired, resending ...\n";
-      // client->sendMessage(basePort + 0, data);
-      continue;
+      std::cout << "1 seconds has expired, resending ...\n";
+      client->sendMessage(basePort + 0, data);
+      // continue;
      }
 
     firstChunk = dynamic_cast<Value*>(store->get(gotKey));
@@ -986,9 +986,9 @@ Value* ChunkStore::getChunkVal(size_t chunkNum, Key *chunkKey) {
     Key *gotKey = new Key(keyVal, nodeIndex);
     // std::cout << "waiting for rsp : ...\n";
     while(!waitForKey(gotKey)) {
-      // std::cout << "Resending messages : ...\n";
-      // client->sendMessage(basePort + whichNode, data);
-      continue;
+      std::cout << "Resending messages : ...\n";
+      client->sendMessage(basePort + whichNode, data);
+      // continue;
     }
     chunkData = dynamic_cast<Value*>(store->get(gotKey));
     store->remove(gotKey);
@@ -1002,7 +1002,7 @@ bool ChunkStore::waitForKey(Key* k) {
   while (!store->keyExists(k)) {
     i++;
     usleep(1000);
-    if (i >= 20) {
+    if (i >= 500) {
       return 0;
     }
   }

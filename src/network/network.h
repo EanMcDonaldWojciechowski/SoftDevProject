@@ -278,7 +278,7 @@ public:
     neighborRoutes = new sockaddr_in[num_nodes];
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(port);
-      std::cout << "Client all variables set \n";
+    std::cout << "Client all variables set \n";
     if(inet_pton(AF_INET, myIP, &my_addr.sin_addr) <= 0) {
       printf("\nInvalid address/ Address not supported \n");
   		exit(1);
@@ -302,6 +302,7 @@ public:
     connectToPeers();
     t1->join();
     std::thread* t2 = new std::thread(&Client::readPeerMessages, this);
+    std::thread* t3 = new std::thread(&Client::handleMessageQueue, this);
 
     std::cout<<"Main thread done. Here are my sockets:\n";
     for (int i = 0; i < numNeighbors; i++) {
@@ -453,6 +454,19 @@ public:
     }
   }
 
+  void handleMessageQueue() {
+    while (TRUE) {
+      while(!msgsArr.empty())  {
+        // std::cout << "\nREADING QUEUE NOW .... \n\n";
+        // std::cout << msgsArr.front() << "\n\n";
+        // std::cout << sdArr.front() << "\n\n";
+        receivedMessage(msgsArr.front(), sdArr.front()); // OR Just delete the char* right after this.
+        msgsArr.pop();
+        sdArr.pop();
+      }
+    }
+  }
+
   void readPeerMessages() {
     char* nextBuffer = new char[4096];
     bool haveNextBuffer = 0;
@@ -475,14 +489,14 @@ public:
           return exit(1);
       } else if (selectStatus == 0) {
           // Do nothing
-          while(!msgsArr.empty())  {
-            // std::cout << "\nREADING QUEUE NOW .... \n\n";
-            // std::cout << msgsArr.front() << "\n\n";
-            // std::cout << sdArr.front() << "\n\n";
-            receivedMessage(msgsArr.front(), sdArr.front()); // OR Just delete the char* right after this.
-            msgsArr.pop();
-            sdArr.pop();
-          }
+          // while(!msgsArr.empty())  {
+          //   // std::cout << "\nREADING QUEUE NOW .... \n\n";
+          //   // std::cout << msgsArr.front() << "\n\n";
+          //   // std::cout << sdArr.front() << "\n\n";
+          //   receivedMessage(msgsArr.front(), sdArr.front()); // OR Just delete the char* right after this.
+          //   msgsArr.pop();
+          //   sdArr.pop();
+          // }
       } else {
         for (int k = 0; k < numNeighbors; k++) {
           int sd = recSockets[k];
