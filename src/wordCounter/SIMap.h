@@ -49,6 +49,13 @@ public:
 		count_++;
 	}
 
+	// Object* pop() // Returns the first element in the array and then removes it
+	// {
+	// 	assert(size_ > 0);
+	// 	Object* retO = elements[0];
+	// 	return elements[0];
+	// }
+
 	bool equals(Object* o) // Compares o with this array for equality.
 	{
 		Array *castedOToArray = dynamic_cast<Array*>(o);

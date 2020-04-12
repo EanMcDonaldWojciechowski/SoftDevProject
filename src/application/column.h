@@ -708,14 +708,14 @@ class IntColumn : public Column {
     data[2048] = '\0';
     for (int i = 0; i < sizeOfChunk; i++) {
       if (idx * sizeOfChunk + i >= count_) {
-        std::cout << "In IntCol serChunk breaking out of loop \n";
+        // std::cout << "In IntCol serChunk breaking out of loop \n";
         break;
       }
       char *doubleChar = new char[1024];
       memset(doubleChar, 0, 1024);
-      std::cout << "Trying to serialize number " << elements[idx][i] << " size of " << sizeof(elements[idx][i]) << "\n";
+      // std::cout << "Trying to serialize number " << elements[idx][i] << " size of " << sizeof(elements[idx][i]) << "\n";
       snprintf(doubleChar, 8, "%d", elements[idx][i]);
-      std::cout << "Serialized number " << doubleChar << "\n";
+      // std::cout << "Serialized number " << doubleChar << "\n";
       strcat(data, doubleChar);
       strcat(data, "}");
     }
@@ -914,7 +914,7 @@ class StringColumn : public Column {
     char* keyChar = new char[256];
     memset(keyChar, 0, 256);
     String* val;
-    std::cout << "IN STRING COL strlen(data) is " << strlen(data) << "\n";
+    // std::cout << "IN STRING COL strlen(data) is " << strlen(data) << "\n";
     for (int i = 0; i < strlen(data); i++) {
       if (data[i] == '}') {
         val = new String(keyChar);

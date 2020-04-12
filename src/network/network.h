@@ -10,6 +10,7 @@
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
 #include <iostream>
 #include <thread>
+#include <queue>
 
 #define TRUE   1
 #define FALSE  0
@@ -259,6 +260,8 @@ public:
   int numNeighbors = 0;
   Hashmap *store;
   size_t num_nodes;
+  std::queue <char*> msgsArr;
+  std::queue <int> sdArr;
 
   Client(char* ip, int port, Hashmap *store_, size_t num_nodes_ ) {
     std::cout << "Client constructor starting \n";
@@ -298,7 +301,7 @@ public:
     std::thread* t1 = new std::thread(&Client::acceptPeers, this);
     connectToPeers();
     t1->join();
-    new std::thread(&Client::readPeerMessages, this);
+    std::thread* t2 = new std::thread(&Client::readPeerMessages, this);
 
     std::cout<<"Main thread done. Here are my sockets:\n";
     for (int i = 0; i < numNeighbors; i++) {
@@ -322,8 +325,9 @@ public:
         clientSock = sendSockets[i];
       }
     }
-    usleep(10000);
-    send(clientSock , msg , strlen(msg) , 0);
+    // usleep(1000);
+    // msg[strlen(msg)] = '\0';
+    send(clientSock , msg , strlen(msg), 0);
     std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
   }
 
@@ -450,14 +454,16 @@ public:
   }
 
   void readPeerMessages() {
+    char* nextBuffer = new char[4096];
+    bool haveNextBuffer = 0;
     while (TRUE) {
       size_t selectStatus;
       struct timeval tv;
       fd_set fdread;
       size_t max_sd;
       FD_ZERO(&fdread);
-      tv.tv_sec = 1;
-      tv.tv_usec = 0;
+      tv.tv_sec = 0;
+      tv.tv_usec = 1;
 
       for (int i = 0; i < numNeighbors; i++) {
         FD_SET(recSockets[i], &fdread);
@@ -469,6 +475,14 @@ public:
           return exit(1);
       } else if (selectStatus == 0) {
           // Do nothing
+          while(!msgsArr.empty())  {
+            // std::cout << "\nREADING QUEUE NOW .... \n\n";
+            // std::cout << msgsArr.front() << "\n\n";
+            // std::cout << sdArr.front() << "\n\n";
+            receivedMessage(msgsArr.front(), sdArr.front()); // OR Just delete the char* right after this.
+            msgsArr.pop();
+            sdArr.pop();
+          }
       } else {
         for (int k = 0; k < numNeighbors; k++) {
           int sd = recSockets[k];
@@ -477,7 +491,45 @@ public:
             int ret = recv(sd, (char *)buffer, sizeof(buffer), 0);
             if(ret > 0) {
                 printf("Message received from socket %d : %s \n", sd, buffer);
-                receivedMessage(buffer, sd);
+                int begSeq = 0;
+                for (int j = 0; j < strlen(buffer); j++) {
+                  // std::cout << buffer[j] << ".";
+                  // std::cout << "j = " << j << "\n";
+                  if (buffer[j] == '{') { // OR WE CAN JUST LOOK FOR PUT AND GET :/
+                    // std::cout << "found end pointer\n";
+                    char* msg = new char[4096];
+                    memset(msg, 0, 4096);
+                    memcpy(msg, &buffer[begSeq], (j) - begSeq); // add the sd array
+                    // std::cout << "found a message part: " << msg << "\n";
+                    begSeq = j + 1;
+                    if (haveNextBuffer) {
+                      char* msg3 = new char[4096];
+                      memset(msg3, 0, 4096);
+                      strcat(msg3, nextBuffer);
+                      strcat(msg3, msg);
+                      msgsArr.push(msg3);
+                      sdArr.push(sd);
+                      // std::cout << "AFTER PARTIAL MESSAGE = " << msg3 << "\n";
+                      memset(nextBuffer, 0, 4096);
+                      // exit(1);
+                      haveNextBuffer = 0;
+                    } else {
+                      msgsArr.push(msg);
+                      sdArr.push(sd);
+                    }
+                  } else {
+                    if (j == strlen(buffer) - 1) {
+                      // char* msg2 = new char[4096];
+                      memset(nextBuffer, 0, 4096);
+                      memcpy(nextBuffer, &buffer[begSeq], (j) - begSeq); // add the sd array
+                      haveNextBuffer = 1;
+                      //std::cout << "\n\n\n\n\n\nFOUND A PARTIAL MESSAGE IN NETOWRK: " << nextBuffer << "\n";
+                      // exit(1);
+                    }
+                  }
+
+                }
+                // receivedMessage(buffer, sd); // OR Just delete the char* right after this.
             }
           }
         }
@@ -518,15 +570,15 @@ public:
       theval[0] = message[i];
       strcat(keyChar, theval);
     }
-    char* val = new char[4098];
-    memset(val, 0, 4098);
+    char* val = new char[4096];
+    memset(val, 0, 4096);
     memcpy(val, &message[i + 1], (strlen(message) - i + 1));
     val[strlen(message) - i + 1] = '\0';
     Value *v = new Value(val);
     store->put(k, v);
     // std::cout << "in network after put...\n";
     // store->printall();
-    memset(message, 0, 4096);
+    memset(message, 0, 4096); // if we use queue, we would delete the char* here instead of memset. this memset would move up to after we add the copy of buffer to the array.
     // std::cout << "in network done with storelocal...\n";
   }
 
@@ -544,7 +596,7 @@ public:
     char* keyChar = new char[256];
     memset(keyChar, 0 , 256);
     Key *k;
-    std::cout << "Looking for key in message " << message << "\n";
+    // std::cout << "Looking for key in message " << message << "\n";
     for (int i = 4; i < strlen(message); i++) {
       if (message[i] == '}') {
           k = new Key(keyChar, myPort - 8810);
@@ -558,13 +610,15 @@ public:
     memset(keyVal, 0, 4);
     strcat(keyVal, "RSP");
     // store->printall();
-    std::cout << "Looking for key " << k->key << "\n";
+    std::cout << "In network Looking for key " << k->key << "\n";
     Value *v = dynamic_cast<Value*>(store->get(k));
-    std::cout << "Found value for key " << k->key << " : " << v->value << "\n";
+    // std::cout << "Found value for key " << k->key << " : " << v->value << "\n";
     Key *tempKey = new Key(keyVal, myPort - 8810);
     char* returnMsg = v->dataToSend(tempKey);
-    usleep(10000);
+    // usleep(10000);
+    returnMsg[strlen(returnMsg)] = '{';
     sendMessage(sendToPort, returnMsg);
+    memset(message, 0, 4096); // if we use queue, we would delete the char* here instead of memset. this memset would move up to after we add the copy of buffer to the array.
   }
 
   void terminate() {

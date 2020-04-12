@@ -270,7 +270,7 @@ class Hashmap : public Object {
 
         // Associates the specified value with the specified key in this map.
         virtual void put(Object *key, Object *val) {
-          std::cout << "MAP size " << size_ << " capacity_ = " << capacity_ << "\n";
+          // std::cout << "MAP size " << size_ << " capacity_ = " << capacity_ << "\n";
           // std::cout << "Before expanding hashKey " << (key->hash() % capacity_) << " capacity_ " << capacity_ << "\n";
           if ((size_ + 1) * 2 > capacity_) {
             // std::cout << "expanding......\n";

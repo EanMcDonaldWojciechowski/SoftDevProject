@@ -55,16 +55,18 @@ public:
   Value* getChunkVal(size_t chunkNum, Key *ChunkKey);
 
   void sendInfo(Key *chunkKey, Value *val) {
-    std::cout << "Adding one to neighborMapSizes " << chunkKey->nodeIndex << " with current value " << neighborMapSizes[chunkKey->nodeIndex] << " and capacity " << neighborMapCapacity[chunkKey->nodeIndex] << "\n";
+    // std::cout << "Adding one to neighborMapSizes " << chunkKey->nodeIndex << " with current value " << neighborMapSizes[chunkKey->nodeIndex] << " and capacity " << neighborMapCapacity[chunkKey->nodeIndex] << "\n";
     neighborMapSizes[chunkKey->nodeIndex]++;
     if (chunkKey->nodeIndex == nodeIndex) {
-      std::cout << "Storing locally on key " << chunkKey->key << " with values " << val->value << "\n";
+      // std::cout << "Storing locally on key " << chunkKey->key << " with values " << val->value << "\n";
       store->put(chunkKey, val);
     } else {
-      client->sendMessage(basePort + chunkKey->nodeIndex, val->dataToSend(chunkKey));
+      char* data = val->dataToSend(chunkKey);
+      data[strlen(data)] = '{';
+      client->sendMessage(basePort + chunkKey->nodeIndex, data);
       // Give hashmap time to expand
       if ((neighborMapSizes[chunkKey->nodeIndex]) * 2 > neighborMapCapacity[chunkKey->nodeIndex]) {
-        std::cout << "waiting for grow...\n";
+        std::cout << "Waiting for neighbor to grow their map...\n";
         usleep(500000);
         neighborMapCapacity[chunkKey->nodeIndex] = neighborMapCapacity[chunkKey->nodeIndex] * 2;
       }

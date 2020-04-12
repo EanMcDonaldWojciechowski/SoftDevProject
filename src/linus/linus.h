@@ -252,7 +252,7 @@ public:
   /** Compute DEGREES of Linus.  */
   void run_() override {
     readInput();
-    std::cout << "Starting Step....................\n";
+    std::cout << "\n\n\nStarting Step....................\n\n\n";
     sleep(2);
     for (size_t i = 0; i < DEGREES; i++) step(i);
   }
@@ -295,7 +295,7 @@ public:
     std::cout << "Starting sets...\n";
     uSet = new Set(users);
     pSet = new Set(projects);
-    std::cout << "Done wiht sets...\n";
+    std::cout << "\n\nDone with sets...\n\n";
     delete df;
     delete s;
  }
