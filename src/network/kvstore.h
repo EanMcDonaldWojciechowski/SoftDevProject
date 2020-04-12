@@ -17,8 +17,8 @@ public:
     store = new Hashmap();
     nodeIndex = nodeIndex_;
     num_nodes = num_nodes_;
-    neighborMapSizes = new int[num_nodes - 1];
-    neighborMapCapacity = new int[num_nodes - 1];
+    neighborMapSizes = new int[num_nodes];
+    neighborMapCapacity = new int[num_nodes];
     for (int k = 0; k < num_nodes; k++) {
       neighborMapSizes[k] = 0;
       neighborMapCapacity[k] = store->capacity_;
@@ -67,7 +67,7 @@ public:
       // Give hashmap time to expand
       if ((neighborMapSizes[chunkKey->nodeIndex]) * 2 > neighborMapCapacity[chunkKey->nodeIndex]) {
         std::cout << "Waiting for neighbor to grow their map...\n";
-        usleep(500000);
+        usleep(250000);
         neighborMapCapacity[chunkKey->nodeIndex] = neighborMapCapacity[chunkKey->nodeIndex] * 2;
       }
     }

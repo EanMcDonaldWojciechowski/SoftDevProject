@@ -32,7 +32,7 @@ class Server {
     int valread;
     int sd;
     int max_sd;
-    char buffer[2048]; //data buffer of 1K
+    char *buffer; //data buffer of 1K
     struct sockaddr_in address;
     fd_set readfds; //set of socket descriptors
     bool open;
@@ -44,6 +44,7 @@ class Server {
     client_socket = new int[max_clients];
     String *strIP = new String("127.0.0.1");
     myIP = strIP->c_str();
+    buffer = new char[2048];
     std::cout<<"Server constructor done.\n";
   }
 
@@ -329,7 +330,7 @@ public:
     // usleep(1000);
     // msg[strlen(msg)] = '\0';
     send(clientSock , msg , strlen(msg), 0);
-    std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
+    // std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
   }
 
   void connectToServer() {
@@ -504,7 +505,7 @@ public:
             memset(buffer, 0, 4096);
             int ret = recv(sd, (char *)buffer, sizeof(buffer), 0);
             if(ret > 0) {
-                printf("Message received from socket %d : %s \n", sd, buffer);
+                // printf("Message received from socket %d : %s \n", sd, buffer);
                 int begSeq = 0;
                 for (int j = 0; j < strlen(buffer); j++) {
                   // std::cout << buffer[j] << ".";
@@ -624,7 +625,7 @@ public:
     memset(keyVal, 0, 4);
     strcat(keyVal, "RSP");
     // store->printall();
-    std::cout << "In network Looking for key " << k->key << "\n";
+    // std::cout << "In network Looking for key " << k->key << "\n";
     Value *v = dynamic_cast<Value*>(store->get(k));
     // std::cout << "Found value for key " << k->key << " : " << v->value << "\n";
     Key *tempKey = new Key(keyVal, myPort - 8810);

@@ -522,7 +522,7 @@ class DataFrame : public Object {
     }
     SOR* reader = new SOR();
     // reader->read(f, 0, 5000000000);
-    reader->read(f, 0, 500000);
+    reader->read(f, 0, 5000000);
     // reader->cols_[0]->printCol();
     std::cout << "reading file" << "\n";
     DataFrame *df = reader->sorToDataframe();
@@ -615,12 +615,12 @@ DataFrame* KVStore::get(Key *k) {
   strcat(colKeyChar, k->key);
   strcat(colKeyChar, "_DONE");
   Key *chunkKey = new Key(colKeyChar, nodeIndex);
-  std::cout<< "kvstore getting chunkKey key " << chunkKey->key << "\n";
+  // std::cout<< "kvstore getting chunkKey key " << chunkKey->key << "\n";
   while(!store->waitForKey(chunkKey)) {
-    std::cout<<"Looking for key " << colKeyChar << " with nodeidx " << nodeIndex << "\n";
+    // std::cout<<"Looking for key " << colKeyChar << " with nodeidx " << nodeIndex << "\n";
     continue;
   }
-  std::cout<<"FOUND KEY MOVING ON \n";
+  // std::cout<<"FOUND KEY MOVING ON \n";
   Schema *colS = new Schema();
   DataFrame *retDf = new DataFrame(*colS);
 
@@ -661,7 +661,7 @@ DataFrame* KVStore::waitAndGet(Key *k) {
   strcat(colKeyChar, k->key);
   strcat(colKeyChar, "_DONE");
   Key *chunkKey = new Key(colKeyChar, k->nodeIndex);
-  std::cout << "BEFORE WAITING FOR END KEY " << colKeyChar << " \n";
+  // std::cout << "BEFORE WAITING FOR END KEY " << colKeyChar << " \n";
   // store->store->printall();
   while(!store->waitForKey(chunkKey)) {
     continue;
@@ -760,7 +760,7 @@ DataFrame* ChunkStore::get(Key *k) {
   std::cout << "In chunkstore get main key " << k->key << "\n";
   char* endKey = constructEndKey(k);
   Key *finalKey = new Key(endKey, k->nodeIndex);
-  std::cout << "In chunkstore get waiting for key " << finalKey->key << "\n";
+  // std::cout << "In chunkstore get waiting for key " << finalKey->key << "\n";
   while(!waitForKey(finalKey)) {
     continue;
   }
@@ -794,18 +794,18 @@ DataFrame* ChunkStore::get(Key *k) {
   Key** subKeys = store->getSubKeys(parentKey);
   size_t i = 0;
   Value *chunkVal;
-  std::cout << "firstChunkStoreKey is " << firstChunkStoreKey << " with parent key " << parentKey->key << "\n";
+  // std::cout << "firstChunkStoreKey is " << firstChunkStoreKey << " with parent key " << parentKey->key << "\n";
   while (subKeys[i] != nullptr) {
-    std::cout << "Looking for subkey: " << subKeys[i]->key << "\n";
+    // std::cout << "Looking for subkey: " << subKeys[i]->key << "\n";
     chunkVal = dynamic_cast<Value*>(store->get(subKeys[i]));
 
-    std::cout << "Print i " << i << "\n";
+    // std::cout << "Print i " << i << "\n";
     if (strcmp(subKeys[i]->key, firstChunkStoreKey) == 0) {
-      std::cout << "Print ChunkVal 0 before taking off metadata: " << chunkVal->value << "\n";
+      // std::cout << "Print ChunkVal 0 before taking off metadata: " << chunkVal->value << "\n";
       size_t fieldNum = 0;
       int m;
       for (m = 0; m < strlen(chunkVal->value); m++) {
-        std::cout << "current char " << chunkVal->value[m] << "\n";
+        // std::cout << "current char " << chunkVal->value[m] << "\n";
         // std::cout<<"fieldNum : " << fieldNum << "\n";
         if (chunkVal->value[m] == '}') {
           fieldNum++;
@@ -816,10 +816,10 @@ DataFrame* ChunkStore::get(Key *k) {
       }
       char *val = new char[1024];
       memcpy(val, &chunkVal->value[m + 1], (strlen(chunkVal->value) - m + 1));
-      std::cout << "Print val after taking off metadata: " << val << "\n";
+      // std::cout << "Print val after taking off metadata: " << val << "\n";
       chunkVal->value = val;
     }
-    std::cout << "Print chunkstore finalVal: " << finalVal->value << "\n";
+    // std::cout << "Print chunkstore finalVal: " << finalVal->value << "\n";
     // std::cout << "Print chunkstore value: " << chunkVal->value << "\n";
     if (finalVal->value[0] == 'I') {
       col->as_int()->deserializeChunk(chunkVal->value);
@@ -833,15 +833,15 @@ DataFrame* ChunkStore::get(Key *k) {
       std::cout << "CHUNKSTORE ERROR again: finalVal not found\n.";
       exit(1);
     }
-    std::cout << "done with loop ... " << i << "\n";
+    // std::cout << "done with loop ... " << i << "\n";
     i++;
   }
-  std::cout << "out of loop.......\n";
+  // std::cout << "out of loop.......\n";
   Schema *s = new Schema();
   DataFrame *df = new DataFrame(*s);
-  std::cout << "out of loop2.......\n";
+  // std::cout << "out of loop2.......\n";
   df->add_column(col);
-  std::cout << "done.......\n";
+  // std::cout << "done.......\n";
   return df;
 }
 
