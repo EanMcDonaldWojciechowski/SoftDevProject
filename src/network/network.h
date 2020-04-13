@@ -289,11 +289,11 @@ public:
     store = store_;
     sendSockets = new int[num_nodes];
     for (int i = 0; i < num_nodes; i++) {
-      sendSockets[i] = 0;
+      sendSockets[i] = -1;
     }
     recSockets = new int[num_nodes];
     for (int i = 0; i < num_nodes; i++) {
-      recSockets[i] = 0;
+      recSockets[i] = -1;
     }
     neighborRoutes = new sockaddr_in[num_nodes];
     for (int k = 0; k < num_nodes; k++) {
@@ -550,6 +550,7 @@ public:
             int ret = recv(sd, (char *)buffer, sizeof(buffer), 0);
             if(ret > 0) {
                 //printf("Message received from socket %d : %s \n", sd, buffer);
+
                 int begSeq = 0;
                 for (int j = 0; j < strlen(buffer); j++) {
                   // std::cout << buffer[j] << ".";
@@ -588,7 +589,6 @@ public:
                   }
 
                 }
-                // receivedMessage(buffer, sd); // OR Just delete the char* right after this.
             }
           }
         }
@@ -608,14 +608,18 @@ public:
         msgType[i] = message[i];
     }
 
+
     if (strcmp(msgType, "PUT") == 0) {
+      //std::cout << " PUTTING THIS : " << message << "\n";
       storeLocal(message);
+
     } else if (strcmp(msgType, "GET") == 0) {
       retrieveLocal(message, sd);
     } else {
       std::cout << "NETWORK ERROR: Found an unrecognized message: " << message << "\n";
       exit(1);
     }
+    delete[] msgType;
   }
 
   void storeLocal(char* message) {

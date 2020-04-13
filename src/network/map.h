@@ -36,8 +36,8 @@
        unsigned long hash = 5381;
        int c;
        int i = 0;
-       char *str = new char[strlen(key) + 1];
-       memset(str, 0, strlen(key) + 1);
+       char *str = new char[strlen(key)];
+       memset(str, 0, strlen(key));
        str = strcpy(str, key);
        while (c = str[i]) {
          hash = ((hash << 5) + hash) + c;
@@ -53,11 +53,17 @@
        if (castedO == nullptr) {
            return false;
        }
-       return (strcmp(this->key, castedO->key) == 0);
+       //std::cout << " this key " << this->key << " castedO->key " << castedO->key << "\n";
+       return (strcmp(this->key, castedO->key) == 0) ;
     }
 
     Key* clone() {
-      return new Key(key, nodeIndex);
+      char *retName = new char[strlen(key) + 1];
+      memset(retName, 0, strlen(key) + 1);
+      strcpy(retName, key);
+      Key* ret = new Key(retName, nodeIndex);
+      delete[] retName;
+      return ret;
     }
 
     size_t home() {return nodeIndex;}
@@ -92,6 +98,7 @@ class Value : public Object {
      strcat(data, "}");
      strcat(data, value);
      // std::cout << "value after: " << data << "\n";
+     delete[] doubleChar;
      return data;
    }
 
@@ -276,13 +283,12 @@ class Hashmap : public Object {
 
         // Associates the specified value with the specified key in this map.
         virtual void put(Object *key, Object *val) {
-          // std::cout << "MAP size " << size_ << " capacity_ = " << capacity_ << "\n";
-          // std::cout << "Before expanding hashKey " << (key->hash() % capacity_) << " capacity_ " << capacity_ << "\n";
           if ((size_ + 1) * 2 > capacity_) {
             // std::cout << "expanding......\n";
             expand();
             // std::cout << "DONE ______   expanding......\n";
           }
+
           Key *key1 = dynamic_cast<Key*>(key);
           Value *val1 = dynamic_cast<Value*>(val);
           size_t hashKey = (key1->hash() % capacity_);
@@ -298,9 +304,10 @@ class Hashmap : public Object {
           // Logic for finding when the next spot in map's hash equals key's hash
           // Keep going until we reach the end of the line of objects in the map
           while(!(data[i] == nullptr)) {
-            if (data[i]->key_->equals(key1)) {
+            if (key1->equals(data[i]->key_)) {
               dupKey = true;
-              std::cout << "ERROR: Found duplicate key.";
+              std::cout << "ERROR: Found duplicate key. \n";
+              std::cout << "k1: " << key1->key << " k2: " << dynamic_cast<Key*>(data[i]->key_)->key << "\n";
               break;
             }
             // Either the hash of the object in the current spot is lower then \
