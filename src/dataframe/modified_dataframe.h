@@ -524,9 +524,9 @@ class DataFrame : public Object {
     // reader->read(f, 0, 5000000000);
     reader->read(f, 0, 5000000);
     // reader->cols_[0]->printCol();
-    std::cout << "reading file" << "\n";
+    // std::cout << "reading file" << "\n";
     DataFrame *df = reader->sorToDataframe();
-    std::cout << "This is file contents I found\n";
+    // std::cout << "This is file contents I found\n";
     kv->put(key, df);
     // df->print();
     // sleep(10);
@@ -864,7 +864,7 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
     strcat(data, "GET}");
     strcat(data, firstChunkKey->key);
     strcat(data, "}");
-    // std::cout << "Chunk store WaitandGet requesting key " << firstChunkKey->key << "\n";
+    std::cout << "Chunk store WaitandGet requesting key " << firstChunkKey->key << "\n";
     data[strlen(data)] = '{';
     client->sendMessage(basePort + 0, data);
 
@@ -872,9 +872,9 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
     memset(keyVal, 0, 4);
     strcat(keyVal, "RSP");
     Key *gotKey = new Key(keyVal, nodeIndex);
-    std::cout << "waiting for rsp ...\n";
+    // std::cout << "waiting for rsp ...\n";
     while (!waitForKey(gotKey)) {
-      std::cout << "1 seconds has expired, resending ...\n";
+      // std::cout << "1 seconds has expired, resending ...\n";
       client->sendMessage(basePort + 0, data);
       // continue;
      }
@@ -985,8 +985,9 @@ Value* ChunkStore::getChunkVal(size_t chunkNum, Key *chunkKey) {
     strcat(keyVal, "RSP");
     Key *gotKey = new Key(keyVal, nodeIndex);
     // std::cout << "waiting for rsp : ...\n";
+    std::cout << "Retrieving chunkKey " << chunkKey->key << " ...\n";
     while(!waitForKey(gotKey)) {
-      std::cout << "Resending messages : ...\n";
+      // std::cout << "Resending messages : ...\n";
       client->sendMessage(basePort + whichNode, data);
       // continue;
     }

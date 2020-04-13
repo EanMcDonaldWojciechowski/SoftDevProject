@@ -1,18 +1,21 @@
-Note: We are including both Milestone 1 and Milestone 2 in this paper. Please remember to add grades for both of those assignments when you give us feedback. Thanks!
-
 Ean Wojciechowski and Hiren Patel
 Software Development
-04/06/2020
+04/13/2020
 
-Introduction: where we give a high-level description of the eau2 system.
+Introduction:
 
 The eau2 system will be able to store and provide functionality on large data sets. The goal of the eau2 system is to provide a means to store large dataframes (100GB) across a distributed network of nodes. Each node will be responsible for a subset of the large dataset, allowing users of our application to analyze or modify the dataset with speed.
 
-Architecture: where we describe the various part of eau2 at a high-level.
+Architecture:
 
-We will have to have an application that is in charge of handling different processes. The application class can be extended to add the desired functionality of the user.
+Our eau2 application architecture will be described in detail below. We created an extendable application class, which has a KVStore instance created during construction. Each application instance uses their KVStore object to communicate and distribute data across the network of nodes.
+
+Linus Level:
+
+Linus is an extension of the application level with implementation details that use the eau2 distributed kvstore application to achieve its output.
 
 Word Count Level:
+
 The word count level is an extension of the application level with specific methods and features for counting the words in a document. The word counter uses the virtual run method of application to enable instances of the wordCount class to all perform some function when run.
 
 Application Level:
@@ -21,16 +24,23 @@ The application level will provide an extensible API that allows users to read a
 
 KVStore Level:
 
-Each node has a KVStore locally. The KVStore is responsible for storing and retrieving data. The KVStore acts as a single unit. The KVStore consists of two layers. First there is the KVStore layer, and beneath that there is the ChunkStore layer. The KVStore is responsible for mapping a Key to a Dataframe Value. From the application tier / user perspective a key is mapped directly to a dataframe’s serialized value, but underneath the KVStore is the ChunkStore, which is responsible for chunking and storing the dataframe. Each column in a dataframe is broken into chunks. Our column implementation was already designed this way from a previous assignment, so we wrote a method for serializing and deserializing specific chunks in a column.
+Each node has a KVStore locally. The KVStore is responsible for storing and retrieving data. The KVStore acts as a single unit. The KVStore consists of two layers. First there is the KVStore layer, and beneath that there is the ChunkStore layer. The KVStore is responsible for mapping a Key to a Dataframe. From the application tier / user perspective a key is mapped directly to a dataframe’s serialized value, but underneath the KVStore is the ChunkStore, which is responsible for chunking the dataframe. Each column in a dataframe is used to create a single column dataframe. Each single column dataframe is then stored in the distributed store by ChunkStore. Our column implementation was already designed to be chunkable from a previous assignment, so we wrote a method for serializing and deserializing specific chunks in a column.
+
+ChunkStore Level:
+
+As described in the KVStore section, the ChunkStore is responsible for mapping keys to single column dataframes. ChunkStore’s put method will take a key and single column dataframe, break the column into serialized chunks, and send those chunks to be distributed across the other nodes in the network.
 
 Networking Level:
 
-Each KVStore has a client field. This field is an instance of a client node. A KVStore will construct a client node during instantiation and connect its node to the server. The server will then pass on each client’s information to every other client so that they can talk to each other directly. When a KVStore needs to get or put data in a remote node it will use its client node field to communicate with the required node. The client node will construct the proper message to send through the wire and the receiving client will decode the message and pass it to the KVStore so that the KVStore can get the value for its map for that key and pass that value back to the requesting node.
+Each ChunkStore has a client field. This field is an instance of a client node. A ChunkStore will construct a client node during instantiation and connect its node to the server. The server will then pass on each client’s information to every other client so that they can talk to each other directly. When a ChunkStore needs to get or put data in a remote node it will use its client node field to communicate with the required node. The client node will construct the proper message to send through the wire and the receiving client will decode the message and pass it to the ChunkStore so that the ChunkStore can get the value for its map for that key and pass that value back to the requesting node. We added a messaging queue to be able to receive multiple messages and handle them in order without losing packets.
 
 Sorer:
 We want to parse a sor file and create a dataframe. The sorer will go through each field in the file, construct the schema, populate the columns, and create a dataframe at the end.
 
-Implementation: where we describe how the system is built, this can include a description of the classes and their API, but only the class you deem relevant and worth describing. (For example: do not describe the utility classes.)
+Implementation:
+
+Linus:
+Our linus code is working to some extent. We are able to read in at least 1 GB worth of code from each file and run linus on it. We have fixed many of the segmentation faults that we used to get, but with a very very large dataset, our program seems to not be able to handle all of that memory usage. We intend to fix this for our final code walk.
 
 WordCounter:
 Our code works from the standpoint of our Dataframe downwards. We can get parts of your code given to us working but we are having a hard time getting different parts of your code working with other parts of your code. This is because you made some design decisions that we may not agree with and may not work with how we structured our APIs. We made an attempt to change both you code and our code to work together but we ran into problems with pointers and addresses since we handle our code differently.
@@ -117,12 +127,13 @@ We created a simple message protocol for our network. Messages can have three le
 
 The final code we have implemented so far is RSP, which is the response code. When a node sends a GET request it must have some way of waiting for a response. To handle get requests we send a PUT message back to the node that originally sent the GET request with a special Key(“RSP”). After the GET request is made the network waits for a response, which comes in the form of PUT RSP followed by the data that was requested. The original node then waits until its local hashmap has a key of RSP (which will contain the GET value it is looking for) and then deserializes the value of the value paired with the key RSP.
 
+When it comes to actually taking in received messages, we implemented both a threaded and select model. We have one thread in charge of using the select statement and retrieving the next buffer filled with messages. The thread then parses over that data and splits it into the individual commands. This is because the OS will hold onto all of our message on a socket until we call select and it will just dump all the individual commands into one long char*. Once the buffer has been parsed, we store each command on an array. We then have a different thread in charge of going through all the PUT and GET commands.
 
 Serialization:
 Currently, we are able to serialize and deserialize information. To tackle the new changes we made to KVStore and the networking layers we had to change how we serialized columns. To handle chunking the columns of a dataframe we implemented two methods in column: serializechunk and deserializechunk. These methods only serialize one section of a column so that we can store a column across multiple nodes.
 
 
-Use cases: examples of uses of the system. This could be in the form of code like the one above. It is okay to leave this section mostly empty if there is nothing to say. Maybe just an example of creating a dataframe would be enough.
+Use cases:
 
 A use case of this application would be storing a large set of data in the application and a dataframe and performing an operation:
 
@@ -168,11 +179,11 @@ public:
 };
 
 
+Two more use cases are WordCounter and Linus. Both applications extend the application class and uses the powers of our distributed KVStore to compute / solve some problem.
 
+Open questions:
 
-Open questions: where you list things that you are not sure of and would like the answer to.
-
-What are the main differences between get and waitandget? Does wait and get just wait until the key exists? Does this go on forever? What happens if get is called and the key does not exist?
+How is a single computer able to handle 8 GB worth of data? Our computer uses all of their ram to be able to hold all that data.
 
 Status: where you describe what has been done and give an estimate of the work that remains.
 

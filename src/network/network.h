@@ -464,6 +464,7 @@ public:
         receivedMessage(msgsArr.front(), sdArr.front()); // OR Just delete the char* right after this.
         msgsArr.pop();
         sdArr.pop();
+        usleep(100);
       }
     }
   }
@@ -625,7 +626,7 @@ public:
     memset(keyVal, 0, 4);
     strcat(keyVal, "RSP");
     // store->printall();
-    // std::cout << "In network Looking for key " << k->key << "\n";
+    std::cout << "In network retrieving requested key " << k->key << "\n";
     Value *v = dynamic_cast<Value*>(store->get(k));
     // std::cout << "Found value for key " << k->key << " : " << v->value << "\n";
     Key *tempKey = new Key(keyVal, myPort - 8810);
