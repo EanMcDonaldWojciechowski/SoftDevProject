@@ -12,6 +12,8 @@ public:
   size_t num_nodes;
   int* neighborMapSizes;
   int* neighborMapCapacity;
+  Server *server;
+  std::thread *t1;
 
   ChunkStore(size_t nodeIndex_, size_t num_nodes_) {
     store = new Hashmap();
@@ -25,8 +27,11 @@ public:
     }
 
     if (nodeIndex == 0) {
-      Server *server = new Server("127.0.0.1", num_nodes);
-      std::thread *t1 = new std::thread(&Server::initialize, server);
+      server = new Server("127.0.0.1", num_nodes);
+      t1 = new std::thread(&Server::initialize, server);
+    } else {
+      server = nullptr;
+      t1 = nullptr;
     }
 
     char* clientIP = new char[256];
@@ -41,7 +46,12 @@ public:
    }
 
   ~ChunkStore() {
-
+    delete client;
+    if (nodeIndex == 0) {
+      delete server;
+      t1->join();
+      delete t1;
+    }
   }
 
   void put(Key *k, DataFrame *v);

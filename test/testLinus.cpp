@@ -9,7 +9,10 @@ int main(int argc, char** argv) {
 
   Linus *linus = new Linus(arg);
   linus->run_();
-  sleep(2);
+  delete linus;
+  delete arg;
+  pthread_exit(0);
+  sleep(5);
 
   std::cout << "COMPLETED" << "\n";
 }

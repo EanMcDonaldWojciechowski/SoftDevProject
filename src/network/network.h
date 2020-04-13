@@ -29,7 +29,7 @@ class Server {
     int new_socket;
     int* client_socket;
     int max_clients;
-    int valread;
+    int valread = 0;
     int sd;
     int max_sd;
     char *buffer; //data buffer of 1K
@@ -42,8 +42,9 @@ class Server {
     routes = new int[max_clients];
     actualClientRoutes = new sockaddr_in[max_clients];
     client_socket = new int[max_clients];
-    String *strIP = new String("127.0.0.1");
-    myIP = strIP->c_str();
+    myIP = new char[16];
+    memset(myIP, 0, 16);
+    strcat(myIP, "127.0.0.1");
     buffer = new char[2048];
     std::cout<<"Server constructor done.\n";
   }
@@ -51,6 +52,9 @@ class Server {
   ~Server() {
     delete[] routes;
     delete[] actualClientRoutes;
+    delete[] client_socket;
+    delete[] buffer;
+    delete[] myIP;
   }
 
   void initialize() {
@@ -121,14 +125,17 @@ class Server {
 
        // Reading client information
        int nPort;
-       if((valread = read( new_socket , buffer, 4096) > 0)) {
-         printf("Got information from Client: %s\n", buffer);
+       valread = read(new_socket, buffer, 2048);
+       if(valread > 0) {
+         //printf("Got information from Client: %s\n", buffer);
          struct sockaddr_in neighbor;
          neighbor.sin_family = AF_INET;
-         char charIP[10];
+         char charIP[11];
+         memset(charIP, 0, 11);
          memcpy(charIP, &buffer[3],9);
          charIP[10] = '\0';
          char charPort[5];
+         memset(charPort, 0, 5);
          memcpy(charPort, &buffer[15],4);
          charPort[4] = '\0';
          char* pEnd;
@@ -186,7 +193,7 @@ class Server {
           strcat(header, thisaddress);
           strcat(header, " P:");
           int thisport = ntohs(client_addr.sin_port);
-          char thisportchar[6];
+          char* thisportchar = new char[6];
           memset(thisportchar, 0, 6);
           sprintf(thisportchar, "%d", thisport);
           strcat(header, thisportchar);
@@ -194,6 +201,9 @@ class Server {
           sd = client_socket[i];
           send(sd, header, strlen(header), 0);
           std::cout << "Sending to client " << routes[i] << ": " << header << "\n";
+          delete[] header;
+          delete[] thisaddress;
+          delete[] thisportchar;
       }
     }
   }
@@ -329,8 +339,9 @@ public:
     }
     // usleep(1000);
     // msg[strlen(msg)] = '\0';
+    usleep(100);
     send(clientSock , msg , strlen(msg), 0);
-    // std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
+    std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
   }
 
   void connectToServer() {
@@ -355,24 +366,32 @@ public:
 
   void configureWithServer() {
     char* header = new char[256];
+    memset(header, 0, 256);
     strcpy(header, "IP:");
     char* thisaddress = new char[10];
     strcpy(thisaddress, myIP);
     strcat(header, thisaddress);
     strcat(header, " P:");
     int thisport = myPort;
-    char thisportchar[6];
+    char *thisportchar = new char[6];
+    memset(thisportchar, 0, 6);
     sprintf(thisportchar, "%d", thisport);
     strcat(header, thisportchar);
     send(sock, header, strlen(header), 0);
     std::cout << "Sending to server my info: " << header << "\n";
+    delete[] header;
+    delete[] thisaddress;
+    delete[] thisportchar;
+
 
     for (int k = 0; k < num_nodes - 1; k++) {
-      if((valread = read( sock , buffer, 4096) > 0)) {
-        printf("Got information from Server: %s\n", buffer);
+      valread = read(sock, buffer, 4096);
+      if(valread > 0) {
+        //printf("Got information from Server: %s\n", buffer);
         struct sockaddr_in neighbor;
         neighbor.sin_family = AF_INET;
-        char charIP[10];
+        char charIP[11];
+        memset(charIP, 0, 11);
         memcpy(charIP, &buffer[3],9);
         charIP[10] = '\0';
         char charPort[5];
@@ -397,14 +416,15 @@ public:
   void acceptPeers() {
     int new_peer = 0;
     listen(currSocket , 2);
-    struct sockaddr_in peer_addr;
+    struct sockaddr_in peer_addr = {};
     int numPeers = 0;
     std::cout<<"Accepting new peers. numPeers is " << numPeers << " and numNeighbors is " << numNeighbors << "\n";
     while((new_peer = accept(currSocket, (struct sockaddr *)&peer_addr, (socklen_t*)&peer_addr)) > 0) {
       printf("Peer connection in client , socket fd is %d , ip is : %s , port : %d\n" ,
       new_peer , inet_ntoa(peer_addr.sin_addr) , ntohs(peer_addr.sin_port));
       valread = read( new_peer , buffer, 4096);
-      char* pEnd;
+      char* pEnd = new char[64];
+      memset(pEnd, 0, 64);
       size_t spotInArray = strtol(buffer, &pEnd, 10);
       std::cout << "INIT other client's port: " << spotInArray << " received on socket " << new_peer << "\n";
 
@@ -505,7 +525,7 @@ public:
             memset(buffer, 0, 4096);
             int ret = recv(sd, (char *)buffer, sizeof(buffer), 0);
             if(ret > 0) {
-                // printf("Message received from socket %d : %s \n", sd, buffer);
+                printf("Message received from socket %d : %s \n", sd, buffer);
                 int begSeq = 0;
                 for (int j = 0; j < strlen(buffer); j++) {
                   // std::cout << buffer[j] << ".";

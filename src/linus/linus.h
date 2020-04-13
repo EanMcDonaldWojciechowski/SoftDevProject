@@ -212,7 +212,7 @@ class Application : public Object {
    // }
 
    ~Application() {
-
+     delete kv;
    }
 
    virtual void run_() {};
@@ -365,7 +365,9 @@ public:
       SetUpdater upd(set);
       merged->map(upd);
       delete merged;
+      std::cout << "end of merge else\n";
     }
+    std::cout << "end of merge total\n";
     delete s;
     delete df;
   }
