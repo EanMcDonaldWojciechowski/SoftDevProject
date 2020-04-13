@@ -259,20 +259,23 @@ public:
   int* sendSockets;
   int* recSockets;
   sockaddr_in* neighborRoutes;
-  int myPort;
+  int myPort = 0;
   int sock = 4;
-  int valread;
-  struct sockaddr_in serv_addr;
-  struct sockaddr_in my_addr;
+  int valread = 0;
+  struct sockaddr_in serv_addr = {};
+  struct sockaddr_in my_addr = {};
   char buffer[4096] = {0};
   bool online = TRUE;
   int opt = TRUE;
-  int currSocket;
+  int currSocket = 0;
   int numNeighbors = 0;
   Hashmap *store;
   size_t num_nodes;
   std::queue <char*> msgsArr;
   std::queue <int> sdArr;
+  std::thread* t1;
+  std::thread* t2;
+  std::thread* t3;
 
   Client(char* ip, int port, Hashmap *store_, size_t num_nodes_ ) {
     std::cout << "Client constructor starting \n";
@@ -285,17 +288,23 @@ public:
     myPort = port;
     store = store_;
     sendSockets = new int[num_nodes];
+    for (int i = 0; i < num_nodes; i++) {
+      sendSockets[i] = 0;
+    }
     recSockets = new int[num_nodes];
+    for (int i = 0; i < num_nodes; i++) {
+      recSockets[i] = 0;
+    }
     neighborRoutes = new sockaddr_in[num_nodes];
+    for (int k = 0; k < num_nodes; k++) {
+      neighborRoutes[k] = {};
+    }
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(port);
-    std::cout << "Client all variables set \n";
     if(inet_pton(AF_INET, myIP, &my_addr.sin_addr) <= 0) {
       printf("\nInvalid address/ Address not supported \n");
   		exit(1);
     }
-    std::cout << "Client IP set to " << inet_ntoa(my_addr.sin_addr) << "\n";
-
     if((currSocket = socket(AF_INET , SOCK_STREAM , 0)) == 0) {
         perror("socket failed");
         exit(EXIT_FAILURE);
@@ -309,13 +318,12 @@ public:
     connectToServer();
     configureWithServer();
 
-    std::thread* t1 = new std::thread(&Client::acceptPeers, this);
-    connectToPeers();
-    t1->join();
-    std::thread* t2 = new std::thread(&Client::readPeerMessages, this);
-    std::thread* t3 = new std::thread(&Client::handleMessageQueue, this);
 
-    std::cout<<"Main thread done. Here are my sockets:\n";
+    t1 = new std::thread(&Client::acceptPeers, this);
+    connectToPeers();
+    t2 = new std::thread(&Client::readPeerMessages, this);
+    t3 = new std::thread(&Client::handleMessageQueue, this);
+
     for (int i = 0; i < numNeighbors; i++) {
       std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
       std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
@@ -327,6 +335,14 @@ public:
     delete[] sendSockets;
     delete[] recSockets;
     delete[] neighborRoutes;
+    delete myIP;
+    delete store;
+    t1->join();
+    t2->join();
+    t3->join();
+    delete t1;
+    delete t2;
+    delete t3;
   }
 
   void sendMessage(int sendTo, const char* msg) {
@@ -422,9 +438,8 @@ public:
     while((new_peer = accept(currSocket, (struct sockaddr *)&peer_addr, (socklen_t*)&peer_addr)) > 0) {
       printf("Peer connection in client , socket fd is %d , ip is : %s , port : %d\n" ,
       new_peer , inet_ntoa(peer_addr.sin_addr) , ntohs(peer_addr.sin_port));
-      valread = read( new_peer , buffer, 4096);
-      char* pEnd = new char[64];
-      memset(pEnd, 0, 64);
+      valread = read(new_peer , buffer, 4096);
+      char *pEnd;
       size_t spotInArray = strtol(buffer, &pEnd, 10);
       std::cout << "INIT other client's port: " << spotInArray << " received on socket " << new_peer << "\n";
 
@@ -435,12 +450,6 @@ public:
         }
 
       }
-
-    //  if (myPort == 8810) {
-    //     spotInArray -= 1;
-    //   } else if (myPort == 8811 && spotInArray == "") {
-    //     spotInArray -= 1;
-    //   }
       recSockets[pos] = new_peer;
       numPeers++;
       if (numPeers == numNeighbors) {
@@ -453,9 +462,11 @@ public:
   void connectToPeers() {
     usleep(10000);
     for (int i = 0; i < numNeighbors; i++) {
-      struct sockaddr_in peer_addr = neighborRoutes[i];
+      struct sockaddr_in peer_addr = {};
+      peer_addr = neighborRoutes[i];
       int peerSock;
-      if((peerSock = socket(AF_INET , SOCK_STREAM , 0)) == 0) {
+      peerSock = socket(AF_INET , SOCK_STREAM , 0);
+      if(peerSock == 0) {
         perror("peer socket failed");
         exit(EXIT_FAILURE);
       }
@@ -466,12 +477,16 @@ public:
         exit(1);
       }
       char *data = new char[4096];
-      char returnChar[256];
+      memset(data, 0, 4096);
+      char *returnChar = new char[256];
+      memset(returnChar, 0, 256);
       snprintf(returnChar, 8, "%d", myPort);
       strcat(data, returnChar);
       std::cout << "INIT sending to socket " << peerSock << " with my port " << data << "\n";
       send(peerSock , data , strlen(data) , 0);
       sendSockets[i] = peerSock;
+      delete[] returnChar;
+      delete[] data;
     }
   }
 
@@ -490,21 +505,30 @@ public:
 
   void readPeerMessages() {
     char* nextBuffer = new char[4096];
+    memset(nextBuffer, 0, 4096);
     bool haveNextBuffer = 0;
     while (TRUE) {
-      size_t selectStatus;
-      struct timeval tv;
-      fd_set fdread;
-      size_t max_sd;
-      FD_ZERO(&fdread);
+      size_t selectStatus = 0;
+      struct timeval tv = {};
+      fd_set *fdread = new fd_set;
+      FD_ZERO(fdread);
+      fd_set *writefds = new fd_set;
+      FD_ZERO(writefds);
+      fd_set *exceptfds = new fd_set;
+      FD_ZERO(exceptfds);
+      size_t max_sd = 0;
       tv.tv_sec = 0;
       tv.tv_usec = 1;
 
-      for (int i = 0; i < numNeighbors; i++) {
-        FD_SET(recSockets[i], &fdread);
+
+      for (int i = 0; i < num_nodes - 1; i++) {
+        FD_SET(recSockets[i], fdread);
         max_sd = (max_sd > recSockets[i]) ? max_sd : recSockets[i];
       }
-      selectStatus = select(max_sd + 1, &fdread, NULL, NULL, &tv);
+
+      //std::cout << "max_sd " << max_sd << " fdread " << (fdread == nullptr) << " writefds " << (writefds == nullptr)
+      //          << " exceptfds " << (exceptfds == nullptr) << "\n";
+      selectStatus = select((max_sd + 1), fdread, writefds, exceptfds, &tv);
       if (selectStatus < 0) {
           printf("select failed\n ");
           return exit(1);
@@ -521,7 +545,7 @@ public:
       } else {
         for (int k = 0; k < numNeighbors; k++) {
           int sd = recSockets[k];
-          if (FD_ISSET(sd, &fdread)) {
+          if (FD_ISSET(sd, fdread)) {
             memset(buffer, 0, 4096);
             int ret = recv(sd, (char *)buffer, sizeof(buffer), 0);
             if(ret > 0) {
@@ -569,6 +593,9 @@ public:
           }
         }
       }
+      delete fdread;
+      delete writefds;
+      delete exceptfds;
     }
   }
 

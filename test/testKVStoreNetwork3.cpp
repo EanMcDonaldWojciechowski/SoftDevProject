@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv) {
   size_t nodeIndex = 2;
-  size_t SZ = 10*50 + 25;
+  size_t SZ = 1000*50 + 25;
   Column *vals = new StringColumn();
   for (size_t i = 0; i < SZ; i++) {
     char nodeIdxChar[256];

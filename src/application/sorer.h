@@ -257,6 +257,7 @@ class SOR : public Object {
 
                 // add all fields in this row to columns
                 // std::cout << "BEGINNING ROW PARSE_______________ \n";
+
                 for (size_t i = 0; i < len_; i++) {
                   // std::cout << "HEREEEEEEEEEEEEEEEEEEEEEEEE\n";
                   // std::cout << "iteration " << i << " with len " << len_ << "\n";
@@ -269,6 +270,7 @@ class SOR : public Object {
                         char type = cols_[i]->get_type();
                         // std::cout << "after get_type.\n";
                         char* pEnd = new char[512];
+                        memset(pEnd, 0, 512);
                         // std::cout << "pEnd = new char[512].\n";
                         if (type == 'B') {
                           // std::cout << "push back B.\n";/
@@ -288,19 +290,11 @@ class SOR : public Object {
                           // std::cout << "Found String: " << wrap->c_str() << " in row " << i << "\n";
                           cols_[i]->push_back(wrap);
                         }
-                        // std::cout << "before memset row 1 is " << row[1] << "\n";
-                        // memset(pEnd, 0, 512);
-                        // std::cout << "after memset row 1 is " << row[1] << "\n";
                     }
                 }
                 // std::cout << "Total bytes read: "<< total_bytes <<"\n";
                 delete[] row;
             }
-            // std::cout << "printing col 1 ...\n";
-            // cols_[0]->printCol();
-            // std::cout << "printing col 2 ...\n";
-            // cols_[1]->printCol();
-            // std::cout << "Finished with parse 2 ...\n";
         }
 
         // Assumes

@@ -172,7 +172,13 @@ class BoolColumn : public Column {
       }
       va_end(vl);
     }
+  }
 
+  ~BoolColumn() {
+    for (int i = 0; i < numOfChunks_; i++ ) {
+      delete[] elements[i];
+    }
+    delete[] elements;
   }
 
   void grow_() {

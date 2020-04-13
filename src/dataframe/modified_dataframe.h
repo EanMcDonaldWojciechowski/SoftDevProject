@@ -611,7 +611,7 @@ DataFrame* KVStore::get(Key *k) {
   // }
   std::cout<< "kvstore getting main key " << k->key << "\n";
   char* colKeyChar = new char[1024];
-  memset(colKeyChar, 0, 1025);
+  memset(colKeyChar, 0, 1024);
   strcat(colKeyChar, k->key);
   strcat(colKeyChar, "_DONE");
   Key *chunkKey = new Key(colKeyChar, nodeIndex);

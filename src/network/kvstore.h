@@ -14,6 +14,7 @@ public:
   int* neighborMapCapacity;
   Server *server;
   std::thread *t1;
+  char* clientIP;
 
   ChunkStore(size_t nodeIndex_, size_t num_nodes_) {
     store = new Hashmap();
@@ -34,23 +35,25 @@ public:
       t1 = nullptr;
     }
 
-    char* clientIP = new char[256];
+    clientIP = new char[256];
     memset(clientIP, 0, 256);
     strcat(clientIP, "127.0.0.");
     char* nodeIdxChar = new char[256];
+    memset(nodeIdxChar, 0, 256);
     snprintf(nodeIdxChar, sizeof(nodeIndex + 2), "%d", nodeIndex + 2);
     strcat(clientIP, nodeIdxChar);
     std::cout << "Client IP is " << clientIP << "\n";
     client = new Client(clientIP, basePort + nodeIndex, store, num_nodes);
-
+    delete[] nodeIdxChar;
    }
 
   ~ChunkStore() {
     delete client;
+    delete[] clientIP;
     if (nodeIndex == 0) {
-      delete server;
       t1->join();
       delete t1;
+      delete server;
     }
   }
 

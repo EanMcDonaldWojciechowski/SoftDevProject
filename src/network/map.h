@@ -15,13 +15,15 @@
      size_t nodeIndex;
 
      Key(char* key_, size_t nodeIndex_) {
-       key = new char[strlen(key_)];
+       key = new char[strlen(key_) + 1];
+       memset(key, 0, strlen(key_) + 1);
        strcpy(key, key_);
        nodeIndex = nodeIndex_;
      }
 
      Key(char* key_) {
-       key = new char[strlen(key_)];
+       key = new char[strlen(key_) + 1];
+       memset(key, 0, strlen(key_) + 1);
        strcpy(key, key_);
        nodeIndex = 0;
      }
@@ -34,7 +36,8 @@
        unsigned long hash = 5381;
        int c;
        int i = 0;
-       char *str = new char[strlen(key)];
+       char *str = new char[strlen(key) + 1];
+       memset(str, 0, strlen(key) + 1);
        str = strcpy(str, key);
        while (c = str[i]) {
          hash = ((hash << 5) + hash) + c;
@@ -54,9 +57,7 @@
     }
 
     Key* clone() {
-      char *retName = new char[strlen(key)];
-      strcpy(retName, key);
-      return new Key(retName, nodeIndex);
+      return new Key(key, nodeIndex);
     }
 
     size_t home() {return nodeIndex;}
