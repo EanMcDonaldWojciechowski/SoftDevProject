@@ -138,7 +138,7 @@ class Server {
          memset(charPort, 0, 5);
          memcpy(charPort, &buffer[15],4);
          charPort[4] = '\0';
-         char* pEnd;
+         char* pEnd = new char[512];
          nPort = strtol(charPort, &pEnd, 10);
          neighbor.sin_port = htons(nPort);
 
@@ -357,7 +357,7 @@ public:
     // msg[strlen(msg)] = '\0';
     usleep(100);
     send(clientSock , msg , strlen(msg), 0);
-    std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
+    //std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
   }
 
   void connectToServer() {
@@ -413,7 +413,7 @@ public:
         char charPort[5];
         memcpy(charPort, &buffer[15],4);
         charPort[4] = '\0';
-        char* pEnd;
+        char* pEnd = new char[512];
         int nPort = strtol(charPort, &pEnd, 10);
         neighbor.sin_port = htons(nPort);
         std::cout << "n2 IP is " << charIP << " and port is " << nPort << "\n";
@@ -439,7 +439,7 @@ public:
       printf("Peer connection in client , socket fd is %d , ip is : %s , port : %d\n" ,
       new_peer , inet_ntoa(peer_addr.sin_addr) , ntohs(peer_addr.sin_port));
       valread = read(new_peer , buffer, 4096);
-      char *pEnd;
+      char *pEnd = new char[512];
       size_t spotInArray = strtol(buffer, &pEnd, 10);
       std::cout << "INIT other client's port: " << spotInArray << " received on socket " << new_peer << "\n";
 
@@ -549,7 +549,7 @@ public:
             memset(buffer, 0, 4096);
             int ret = recv(sd, (char *)buffer, sizeof(buffer), 0);
             if(ret > 0) {
-                printf("Message received from socket %d : %s \n", sd, buffer);
+                //printf("Message received from socket %d : %s \n", sd, buffer);
                 int begSeq = 0;
                 for (int j = 0; j < strlen(buffer); j++) {
                   // std::cout << buffer[j] << ".";

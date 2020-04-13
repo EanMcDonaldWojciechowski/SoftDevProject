@@ -211,10 +211,10 @@ class Hashmap : public Object {
           // printall();
           // std::cout << "Found key " << dynamic_cast<Key*>(data[hashKey]->key_)->key << " key " << key1->key <<  " equals " << dynamic_cast<Key*>(data[hashKey]->key_)->equals(key1) <<  "\n" ;
           while(!data[hashKey]->key_->equals(key1)) {
-            std::cout << "hashmap has val = null ? " << (data[hashKey] == nullptr) << " hashKey: " << hashKey << " cap: " << capacity_ << " \n";
+            //std::cout << "hashmap has val = null ? " << (data[hashKey] == nullptr) << " hashKey: " << hashKey << " cap: " << capacity_ << " \n";
             hashKey = (hashKey + 1) % capacity_;
             if (data[hashKey]->key_->equals(key1)) {
-              std::cout << "found it \n";
+              //std::cout << "found it \n";
             }
           }
 
