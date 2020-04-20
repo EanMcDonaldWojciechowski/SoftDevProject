@@ -269,8 +269,7 @@ class SOR : public Object {
                       // std::cout << "else branch.\n";
                         char type = cols_[i]->get_type();
                         // std::cout << "after get_type.\n";
-                        char* pEnd = new char[512];
-                        memset(pEnd, 0, 512);
+                        char* pEnd;
                         // std::cout << "pEnd = new char[512].\n";
                         if (type == 'B') {
                           // std::cout << "push back B.\n";/
