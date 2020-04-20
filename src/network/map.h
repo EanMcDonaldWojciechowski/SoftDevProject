@@ -4,7 +4,8 @@
 // #include "string.h"
 // #include <stdio.h>
 // #include <stdlib.h>
-
+#include <mutex>          // std::mutex
+std::mutex mtx;           // mutex for critical section
 /*************************************************************************
  * Key::
  * Stores values by key
@@ -36,7 +37,7 @@
        unsigned long hash = 5381;
        int c;
        int i = 0;
-       char *str = new char[strlen(key)];
+       char *str = new char[strlen(key) + 1];
        memset(str, 0, strlen(key));
        str = strcpy(str, key);
        while (c = str[i]) {
@@ -194,6 +195,7 @@ class Hashmap : public Object {
 
         // Double the capacity of hashmap when needed
         void expand() {
+          // std::cout << "Expanding hashmap now... old adr : " << this << "\n";
           Hashmap *copy = new Hashmap(capacity_ * 2);
           for (int i = 0; i < capacity_; i++) {
             if (!(data[i] == nullptr)) {
@@ -203,6 +205,7 @@ class Hashmap : public Object {
           delete[] data;
           data = copy->data;
           capacity_ = capacity_ * 2;
+          // std::cout << "Expanding hashmap now... new adr : " << this << "\n";
         }
 
         // Returns the value to which the specified key is mapped,
@@ -285,11 +288,14 @@ class Hashmap : public Object {
         virtual void put(Object *key, Object *val) {
           if ((size_ + 1) * 2 > capacity_) {
             // std::cout << "expanding......\n";
+            mtx.lock();
             expand();
+            mtx.unlock();
             // std::cout << "DONE ______   expanding......\n";
           }
 
           Key *key1 = dynamic_cast<Key*>(key);
+          // std::cout << "Putting key " << key1->key << " with map size " << size_ << " with adr " << this << "\n";
           Value *val1 = dynamic_cast<Value*>(val);
           size_t hashKey = (key1->hash() % capacity_);
           // std::cout << "Key " << key1->key << " hashKey " << hashKey << " capacity_ " << capacity_ << "\n";
@@ -306,7 +312,7 @@ class Hashmap : public Object {
           while(!(data[i] == nullptr)) {
             if (key1->equals(data[i]->key_)) {
               dupKey = true;
-              std::cout << "ERROR: Found duplicate key. \n";
+              std::cout << "ERROR: Found duplicate key. ";
               std::cout << "k1: " << key1->key << " k2: " << dynamic_cast<Key*>(data[i]->key_)->key << "\n";
               break;
             }

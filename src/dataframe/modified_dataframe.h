@@ -522,7 +522,7 @@ class DataFrame : public Object {
     }
     SOR* reader = new SOR();
     // reader->read(f, 0, 5000000000);
-    reader->read(f, 0, 50000000);
+    reader->read(f, 0, 10000000);
     // reader->cols_[0]->printCol();
     std::cout << "reading file" << "\n";
     DataFrame *df = reader->sorToDataframe();
@@ -984,9 +984,9 @@ Value* ChunkStore::getChunkVal(size_t chunkNum, Key *chunkKey) {
     memset(keyVal, 0, 4);
     strcat(keyVal, "RSP");
     Key *gotKey = new Key(keyVal, nodeIndex);
-    // std::cout << "waiting for rsp : ...\n";
+    std::cout << "waiting for rsp : for data ... " << data << " \n";
     while(!waitForKey(gotKey)) {
-      std::cout << "Resending messages : ...\n";
+      std::cout << "Resending messages for key : " << data << " \n";
       client->sendMessage(basePort + whichNode, data);
       // continue;
     }

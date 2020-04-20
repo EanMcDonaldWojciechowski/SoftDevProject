@@ -138,7 +138,7 @@ class Server {
          memset(charPort, 0, 5);
          memcpy(charPort, &buffer[15],4);
          charPort[4] = '\0';
-         char* pEnd = new char[512];
+         char* pEnd;
          nPort = strtol(charPort, &pEnd, 10);
          neighbor.sin_port = htons(nPort);
 
@@ -287,6 +287,7 @@ public:
     myIP = ip;
     myPort = port;
     store = store_;
+    std::cout << "\n\n\nOfficial Map Client adr: " << store << "\n\n\n";
     sendSockets = new int[num_nodes];
     for (int i = 0; i < num_nodes; i++) {
       sendSockets[i] = -1;
@@ -320,10 +321,13 @@ public:
 
 
     t1 = new std::thread(&Client::acceptPeers, this);
+    t1->detach();
     connectToPeers();
     t2 = new std::thread(&Client::readPeerMessages, this);
+    t2->detach();
     t3 = new std::thread(&Client::handleMessageQueue, this);
-
+    t3->detach();
+    usleep(1000);
     for (int i = 0; i < numNeighbors; i++) {
       std::cout << "ports: " << ntohs(neighborRoutes[i].sin_port) << "\n";
       std::cout << "sendSockets[i]: " << sendSockets[i] << "\n";
@@ -413,7 +417,7 @@ public:
         char charPort[5];
         memcpy(charPort, &buffer[15],4);
         charPort[4] = '\0';
-        char* pEnd = new char[512];
+        char* pEnd;
         int nPort = strtol(charPort, &pEnd, 10);
         neighbor.sin_port = htons(nPort);
         std::cout << "n2 IP is " << charIP << " and port is " << nPort << "\n";
@@ -424,6 +428,7 @@ public:
         neighborRoutes[numNeighbors] = neighbor;
         numNeighbors++;
         memset(buffer, 0, 4096);
+        // delete pEnd;
       }
     }
 
@@ -439,7 +444,7 @@ public:
       printf("Peer connection in client , socket fd is %d , ip is : %s , port : %d\n" ,
       new_peer , inet_ntoa(peer_addr.sin_addr) , ntohs(peer_addr.sin_port));
       valread = read(new_peer , buffer, 4096);
-      char *pEnd = new char[512];
+      char *pEnd;
       size_t spotInArray = strtol(buffer, &pEnd, 10);
       std::cout << "INIT other client's port: " << spotInArray << " received on socket " << new_peer << "\n";
 
@@ -491,14 +496,18 @@ public:
   }
 
   void handleMessageQueue() {
+    int i = 0;
     while (TRUE) {
       while(!msgsArr.empty())  {
         // std::cout << "\nREADING QUEUE NOW .... \n\n";
-        // std::cout << msgsArr.front() << "\n\n";
+        // if (i % 1000 == 0) {
+        //     std::cout << i << " msg in array: " << msgsArr.front() << "\n";
+        // }
         // std::cout << sdArr.front() << "\n\n";
         receivedMessage(msgsArr.front(), sdArr.front()); // OR Just delete the char* right after this.
         msgsArr.pop();
         sdArr.pop();
+        i++;
       }
     }
   }

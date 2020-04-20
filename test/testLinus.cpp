@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
   linus->run_();
   delete linus;
   delete arg;
-  pthread_exit(0);
+  // pthread_exit(0);
   sleep(5);
 
   std::cout << "COMPLETED" << "\n";

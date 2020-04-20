@@ -18,6 +18,7 @@ public:
 
   ChunkStore(size_t nodeIndex_, size_t num_nodes_) {
     store = new Hashmap();
+    std::cout << "\n\n\nOfficial Map chunkStore adr: " << store << "\n\n\n";
     nodeIndex = nodeIndex_;
     num_nodes = num_nodes_;
     neighborMapSizes = new int[num_nodes];
@@ -30,6 +31,7 @@ public:
     if (nodeIndex == 0) {
       server = new Server("127.0.0.1", num_nodes);
       t1 = new std::thread(&Server::initialize, server);
+      t1->detach();
     } else {
       server = nullptr;
       t1 = nullptr;
