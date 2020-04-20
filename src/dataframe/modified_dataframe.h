@@ -522,7 +522,7 @@ class DataFrame : public Object {
     }
     SOR* reader = new SOR();
     // reader->read(f, 0, 5000000000);
-    reader->read(f, 0, 10000000);
+    reader->read(f, 0, 5000000);
     // reader->cols_[0]->printCol();
     std::cout << "reading file" << "\n";
     DataFrame *df = reader->sorToDataframe();
@@ -530,6 +530,7 @@ class DataFrame : public Object {
     kv->put(key, df);
     // df->print();
     // sleep(10);
+    delete reader;
     return df;
   }
 };
