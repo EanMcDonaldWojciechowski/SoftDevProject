@@ -321,8 +321,8 @@ public:
 
 
     t1 = new std::thread(&Client::acceptPeers, this);
-    t1->detach();
     connectToPeers();
+    t1->join();
     t2 = new std::thread(&Client::readPeerMessages, this);
     t2->detach();
     t3 = new std::thread(&Client::handleMessageQueue, this);
@@ -341,7 +341,7 @@ public:
     delete[] neighborRoutes;
     delete myIP;
     delete store;
-    t1->join();
+    // t1->join();
     t2->join();
     t3->join();
     delete t1;
