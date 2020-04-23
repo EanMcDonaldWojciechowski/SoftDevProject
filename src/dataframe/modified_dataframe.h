@@ -540,8 +540,6 @@ void KVStore::put(Key *k, DataFrame *v) {
   std::cout<<"KVSTORE put INITIAL KEY : " << k->key << "\n";
   size_t numCols = v->scm->width();
 
-
-
   char *colType = v->scm->colType;
   // std::cout<<"colTypecolTypecolTypecolTypecolType: " << colType << "\n";
   String *metaDataStr = new String(colType);
@@ -561,7 +559,7 @@ void KVStore::put(Key *k, DataFrame *v) {
   Key *colKey;
   for (int i = 0; i < numCols; i++) {
     char* colKeyChar = new char[1024];
-    memset(colKeyChar, 0, 1025);
+    memset(colKeyChar, 0, 1024);
     strcat(colKeyChar, k->key);
     strcat(colKeyChar, "_");
     char nodeIdxChar[256];
@@ -588,6 +586,8 @@ void KVStore::put(Key *k, DataFrame *v) {
     store->put(colKey, colDf);
     delete colDf;
     delete colS;
+    delete[] colTypeChar;
+    delete[] colKeyChar;
   }
 
   char* chunkStoreKey = new char[1024];
@@ -602,6 +602,7 @@ void KVStore::put(Key *k, DataFrame *v) {
 
     store->sendInfo(chunkKeyFinal, dataValFinal);
   }
+  delete[] chunkStoreKey;
 }
 
 
@@ -636,7 +637,7 @@ DataFrame* KVStore::get(Key *k) {
     type = colTypes->c_str()[i];
 
     char* colKeyChar = new char[1024];
-    memset(colKeyChar, 0, 1025);
+    memset(colKeyChar, 0, 1024);
     strcat(colKeyChar, k->key);
     strcat(colKeyChar, "_");
     char nodeIdxChar[256];
@@ -651,14 +652,17 @@ DataFrame* KVStore::get(Key *k) {
 
     singleColDF = store->get(colKey);
     retDf->add_column(singleColDF->column[0]);
+    delete[] typeStr;
   }
 
+  delete[] colKeyChar;
   return retDf;
 }
 
 DataFrame* KVStore::waitAndGet(Key *k) {
   char* colKeyChar = new char[1024];
   memset(colKeyChar, 0, 1024);
+  colKeyChar[1023] = '\0';
   strcat(colKeyChar, k->key);
   strcat(colKeyChar, "_DONE");
   Key *chunkKey = new Key(colKeyChar, k->nodeIndex);
@@ -687,7 +691,7 @@ DataFrame* KVStore::waitAndGet(Key *k) {
     // std::cout << "finding column #" << i << " type " << type << "\n";
 
     char* colKeyChar = new char[1024];
-    memset(colKeyChar, 0, 1025);
+    memset(colKeyChar, 0, 1024);
     strcat(colKeyChar, k->key);
     strcat(colKeyChar, "_");
     char nodeIdxChar[256];
@@ -702,8 +706,9 @@ DataFrame* KVStore::waitAndGet(Key *k) {
     // std::cout << "In KVStore wait and get.. waiting for key " << colKeyChar << " \n";
     singleColDF = store->waitAndGet(colKey);
     retDf->add_column(singleColDF->column[0]);
+    delete[] typeStr;
   }
-
+  delete[] colKeyChar;
   return retDf;
 }
 
@@ -755,6 +760,7 @@ void ChunkStore::put(Key *k, DataFrame *v) {
     // std::cout<< "with values: " << finalVal << "\n";
     sendInfo(chunkKeyFinal, dataValFinal);
   }
+  delete[] finalVal;
 }
 
 DataFrame* ChunkStore::get(Key *k) {
@@ -781,7 +787,7 @@ DataFrame* ChunkStore::get(Key *k) {
   }
 
   char* chunkStoreKey = new char[1024];
-  memset(chunkStoreKey, 0, 1025);
+  memset(chunkStoreKey, 0, 1024);
   strcat(chunkStoreKey, k->key);
   strcat(chunkStoreKey, "_");
   char nodeIdxChar[256];
@@ -843,6 +849,7 @@ DataFrame* ChunkStore::get(Key *k) {
   // std::cout << "out of loop2.......\n";
   df->add_column(col);
   // std::cout << "done.......\n";
+  delete[] chunkStoreKey;
   return df;
 }
 
