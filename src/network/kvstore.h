@@ -18,7 +18,7 @@ public:
 
   ChunkStore(size_t nodeIndex_, size_t num_nodes_) {
     store = new Hashmap();
-    std::cout << "\n\n\nOfficial Map chunkStore adr: " << store << "\n\n\n";
+    // std::cout << "\n\n\nOfficial Map chunkStore adr: " << store << "\n\n\n";
     nodeIndex = nodeIndex_;
     num_nodes = num_nodes_;
     neighborMapSizes = new int[num_nodes];

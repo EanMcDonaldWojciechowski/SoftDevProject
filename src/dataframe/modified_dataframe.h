@@ -898,11 +898,13 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
   size_t colLen;
   char colType;
   char* keyChar = new char[256];
+  memset(keyChar, 0, 256);
   size_t fieldNum = 0;
   int i;
   // std::cout << "Parsing metadata ...\n";
   for (i = 0; i < strlen(firstChunk->value); i++) {
     if (firstChunk->value[i] == '}') {
+      std::cout << "Metadata keyChar " << keyChar << " for fieldNum " << fieldNum << " ...\n";
       if (fieldNum == 0) {
         char* pEnd;
         numChunks = strtol(keyChar, &pEnd, 10);
@@ -929,6 +931,7 @@ DataFrame* ChunkStore::waitAndGet(Key *k) {
   memcpy(val, &firstChunk->value[i + 1], (strlen(firstChunk->value) - i + 1));
 
   // std::cout << "building  columns ...\n";
+  std::cout << "Metadata numChunks " << numChunks << " ...\n";
   Column *col;
   if (colType == 'I') {
     col = new IntColumn();
