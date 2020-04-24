@@ -21,8 +21,8 @@ int main(int argc, char** argv) {
   // kv->put(k, df);
   // sleep(4);
   std::cout << "GETING VALUES NOW______________" << "\n";
-  DataFrame *newDF = kv->get(k);
-  // DataFrame *newDF = kv->waitAndGet(k);
+  // DataFrame *newDF = kv->get(k);
+  DataFrame *newDF = kv->waitAndGet(k);
   std::cout << "Printing final DF" << "\n";
   newDF->print();
   sleep(1);
