@@ -18,7 +18,6 @@ public:
 
   ChunkStore(size_t nodeIndex_, size_t num_nodes_) {
     store = new Hashmap();
-    // std::cout << "\n\n\nOfficial Map chunkStore adr: " << store << "\n\n\n";
     nodeIndex = nodeIndex_;
     num_nodes = num_nodes_;
     neighborMapSizes = new int[num_nodes];
@@ -70,10 +69,8 @@ public:
   Value* getChunkVal(size_t chunkNum, Key *ChunkKey);
 
   void sendInfo(Key *chunkKey, Value *val) {
-    // std::cout << "Adding one to neighborMapSizes " << chunkKey->nodeIndex << " with current value " << neighborMapSizes[chunkKey->nodeIndex] << " and capacity " << neighborMapCapacity[chunkKey->nodeIndex] << "\n";
     neighborMapSizes[chunkKey->nodeIndex]++;
     if (chunkKey->nodeIndex == nodeIndex) {
-      // std::cout << "Storing locally on key " << chunkKey->key << " with values " << val->value << "\n";
       store->put(chunkKey, val);
     } else {
       char* data = val->dataToSend(chunkKey);

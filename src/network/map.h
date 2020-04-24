@@ -87,29 +87,24 @@ class Value : public Object {
    }
 
    char* dataToSend(Key* key) {
-     // std::cout << "value before: " << value << "\n";
      char* data = new char[4096];
      memset(data, 0, 4096);
      data[4096] = '\0';
      char *doubleChar = new char[256];
      memset(doubleChar, 0, 256);
      strcat(data, "PUT}");
-     // std::cout << "this is key: " << key->key << "\n";
      strcat(data, key->key);
      strcat(data, "}");
      strcat(data, value);
-     // std::cout << "value after: " << data << "\n";
      delete[] doubleChar;
      return data;
    }
 
    char* dataToRetrieve(Key* key, size_t chunkNum) {
-     // std::cout << "value before: " << value << "\n";
      char* data = new char[4096];
      memset(data, 0, 4096);
      data[4096] = '\0';
      strcat(data, "GET}");
-     // std::cout << "this is key: " << key->key << "\n";
      strcat(data, key->key);
      strcat(data, "_");
      char *doubleChar = new char[256];
@@ -122,7 +117,6 @@ class Value : public Object {
      snprintf(iIdxChar,sizeof(chunkNum), "%d", chunkNum);
      strcat(data, iIdxChar);
      strcat(data, "}");
-     // std::cout << "value after: " << data << "\n";
      return data;
    }
 
@@ -135,11 +129,6 @@ class Hashmap_pair : public Object {
     public:
         Object* key_;
         Object* val_;
-
-        // Hashmap_pair(String *key, Num *val) : Object() {
-        //     key_ = key;
-        //     val_ = val;
-        // }
 
         Hashmap_pair(Key *key, Value *val) : Object() {
             key_ = key;
@@ -195,7 +184,6 @@ class Hashmap : public Object {
 
         // Double the capacity of hashmap when needed
         void expand() {
-          // std::cout << "Expanding hashmap now... old adr : " << this << "\n";
           Hashmap *copy = new Hashmap(capacity_ * 2);
           for (int i = 0; i < capacity_; i++) {
             if (!(data[i] == nullptr)) {
@@ -205,7 +193,6 @@ class Hashmap : public Object {
           delete[] data;
           data = copy->data;
           capacity_ = capacity_ * 2;
-          // std::cout << "Expanding hashmap now... new adr : " << this << "\n";
         }
 
         // Returns the value to which the specified key is mapped,
@@ -213,21 +200,9 @@ class Hashmap : public Object {
         virtual Object* get(Object *key) {
           Key *key1 = dynamic_cast<Key*>(key);
           size_t hashKey = (key1->hash() % capacity_);
-          // std::cout << "Key " << key1->key << " with hash " << hashKey << " with capacity_ " << capacity_ << "\n";
-          // std::cout << "Key's plain hash() is " << key->hash() << "\n";
-          // std::cout << "Key1's plain hash() is " << key1->hash() << "\n";
-          // std::cout << "Looking for key in Hash location " << (key->hash() % capacity_) << "\n";
-          // std::cout << "Found key " << dynamic_cast<Key*>(data[hashKey]->key_)->key << "\n";
-          // printall();
-          // std::cout << "Found key " << dynamic_cast<Key*>(data[hashKey]->key_)->key << " key " << key1->key <<  " equals " << dynamic_cast<Key*>(data[hashKey]->key_)->equals(key1) <<  "\n" ;
           while(!data[hashKey]->key_->equals(key1)) {
-            //std::cout << "hashmap has val = null ? " << (data[hashKey] == nullptr) << " hashKey: " << hashKey << " cap: " << capacity_ << " \n";
             hashKey = (hashKey + 1) % capacity_;
-            if (data[hashKey]->key_->equals(key1)) {
-              //std::cout << "found it \n";
-            }
           }
-
           return data[hashKey]->val_;
         }
 
@@ -236,7 +211,6 @@ class Hashmap : public Object {
           Key *key1 = dynamic_cast<Key*>(key);
           size_t hashKey = (key1->hash() % capacity_);
           size_t iteration = 0;
-          // printall();
 
           for (int i = 0; i < capacity_; i++) {
             if (data[hashKey] == nullptr) {
@@ -287,20 +261,14 @@ class Hashmap : public Object {
         // Associates the specified value with the specified key in this map.
         virtual void put(Object *key, Object *val) {
           if ((size_ + 1) * 2 > capacity_) {
-            // std::cout << "expanding......\n";
             mtx.lock();
             expand();
             mtx.unlock();
-            // std::cout << "DONE ______   expanding......\n";
           }
 
           Key *key1 = dynamic_cast<Key*>(key);
-          // std::cout << "Putting key " << key1->key << " with map size " << size_ << " with adr " << this << "\n";
           Value *val1 = dynamic_cast<Value*>(val);
           size_t hashKey = (key1->hash() % capacity_);
-          // std::cout << "Key " << key1->key << " hashKey " << hashKey << " capacity_ " << capacity_ << "\n";
-          // std::cout << "Key's plain hash() is " << key->hash() << "\n";
-          // std::cout << "Key1's plain hash() is " << key1->hash() << "\n";
           size_t i = hashKey;
           Hashmap_pair *temp = nullptr;
           Hashmap_pair *newObject = new Hashmap_pair(key1, val1);
@@ -331,7 +299,6 @@ class Hashmap : public Object {
               i = ((i + 1) % capacity_);
             }
           }
-          // std::cout << "IN PUT i " << i << " hashKey " << hashKey << "\n";
           if (!dupKey) {
             data[i] = newObject;
             size_++;
@@ -356,7 +323,6 @@ class Hashmap : public Object {
         // Removes the mapping for the specified key from this map if present.
         void remove(Object *key) {
           size_t hashKey = (key->hash() % capacity_);
-          //std::cout << "hashkey " << hashKey << "\n";
           size_t i = hashKey;
           while(!data[i]->key_->equals(key)) {
             // stop this loop if we cant find it. otherwise endless loop

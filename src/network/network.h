@@ -287,7 +287,6 @@ public:
     myIP = ip;
     myPort = port;
     store = store_;
-    std::cout << "\n\n\nOfficial Map Client adr: " << store << "\n\n\n";
     sendSockets = new int[num_nodes];
     for (int i = 0; i < num_nodes; i++) {
       sendSockets[i] = -1;
@@ -357,8 +356,6 @@ public:
         clientSock = sendSockets[i];
       }
     }
-    // usleep(1000);
-    // msg[strlen(msg)] = '\0';
     usleep(100);
     send(clientSock , msg , strlen(msg), 0);
     //std::cout << "Sending message to socket " << clientSock << " :" << msg << "\n";
@@ -499,11 +496,6 @@ public:
     int i = 0;
     while (TRUE) {
       while(!msgsArr.empty())  {
-        // std::cout << "\nREADING QUEUE NOW .... \n\n";
-        // if (i % 1000 == 0) {
-        //     std::cout << i << " msg in array: " << msgsArr.front() << "\n";
-        // }
-        // std::cout << sdArr.front() << "\n\n";
         receivedMessage(msgsArr.front(), sdArr.front()); // OR Just delete the char* right after this.
         msgsArr.pop();
         sdArr.pop();
@@ -534,23 +526,12 @@ public:
         FD_SET(recSockets[i], fdread);
         max_sd = (max_sd > recSockets[i]) ? max_sd : recSockets[i];
       }
-
-      //std::cout << "max_sd " << max_sd << " fdread " << (fdread == nullptr) << " writefds " << (writefds == nullptr)
-      //          << " exceptfds " << (exceptfds == nullptr) << "\n";
       selectStatus = select((max_sd + 1), fdread, writefds, exceptfds, &tv);
       if (selectStatus < 0) {
           printf("select failed\n ");
           return exit(1);
       } else if (selectStatus == 0) {
           // Do nothing
-          // while(!msgsArr.empty())  {
-          //   // std::cout << "\nREADING QUEUE NOW .... \n\n";
-          //   // std::cout << msgsArr.front() << "\n\n";
-          //   // std::cout << sdArr.front() << "\n\n";
-          //   receivedMessage(msgsArr.front(), sdArr.front()); // OR Just delete the char* right after this.
-          //   msgsArr.pop();
-          //   sdArr.pop();
-          // }
       } else {
         for (int k = 0; k < numNeighbors; k++) {
           int sd = recSockets[k];
@@ -562,14 +543,10 @@ public:
 
                 int begSeq = 0;
                 for (int j = 0; j < strlen(buffer); j++) {
-                  // std::cout << buffer[j] << ".";
-                  // std::cout << "j = " << j << "\n";
-                  if (buffer[j] == '{') { // OR WE CAN JUST LOOK FOR PUT AND GET :/
-                    // std::cout << "found end pointer\n";
+                  if (buffer[j] == '{') {
                     char* msg = new char[4096];
                     memset(msg, 0, 4096);
                     memcpy(msg, &buffer[begSeq], (j) - begSeq); // add the sd array
-                    // std::cout << "found a message part: " << msg << "\n";
                     begSeq = j + 1;
                     if (haveNextBuffer) {
                       char* msg3 = new char[4096];
@@ -578,9 +555,7 @@ public:
                       strcat(msg3, msg);
                       msgsArr.push(msg3);
                       sdArr.push(sd);
-                      // std::cout << "AFTER PARTIAL MESSAGE = " << msg3 << "\n";
                       memset(nextBuffer, 0, 4096);
-                      // exit(1);
                       haveNextBuffer = 0;
                     } else {
                       msgsArr.push(msg);
@@ -588,12 +563,9 @@ public:
                     }
                   } else {
                     if (j == strlen(buffer) - 1) {
-                      // char* msg2 = new char[4096];
                       memset(nextBuffer, 0, 4096);
                       memcpy(nextBuffer, &buffer[begSeq], (j) - begSeq); // add the sd array
                       haveNextBuffer = 1;
-                      //std::cout << "\n\n\n\n\n\nFOUND A PARTIAL MESSAGE IN NETOWRK: " << nextBuffer << "\n";
-                      // exit(1);
                     }
                   }
 
@@ -619,7 +591,6 @@ public:
 
 
     if (strcmp(msgType, "PUT") == 0) {
-      //std::cout << " PUTTING THIS : " << message << "\n";
       storeLocal(message);
 
     } else if (strcmp(msgType, "GET") == 0) {
@@ -651,10 +622,8 @@ public:
     val[strlen(message) - i + 1] = '\0';
     Value *v = new Value(val);
     store->put(k, v);
-    // std::cout << "in network after put...\n";
     // store->printall();
-    memset(message, 0, 4096); // if we use queue, we would delete the char* here instead of memset. this memset would move up to after we add the copy of buffer to the array.
-    // std::cout << "in network done with storelocal...\n";
+    memset(message, 0, 4096);
   }
 
   void retrieveLocal(char* message, int sd) {
@@ -671,7 +640,6 @@ public:
     char* keyChar = new char[256];
     memset(keyChar, 0 , 256);
     Key *k;
-    // std::cout << "Looking for key in message " << message << "\n";
     for (int i = 4; i < strlen(message); i++) {
       if (message[i] == '}') {
           k = new Key(keyChar, myPort - 8810);
@@ -685,15 +653,13 @@ public:
     memset(keyVal, 0, 4);
     strcat(keyVal, "RSP");
     // store->printall();
-    // std::cout << "In network Looking for key " << k->key << "\n";
     Value *v = dynamic_cast<Value*>(store->get(k));
-    // std::cout << "Found value for key " << k->key << " : " << v->value << "\n";
     Key *tempKey = new Key(keyVal, myPort - 8810);
     char* returnMsg = v->dataToSend(tempKey);
     // usleep(10000);
     returnMsg[strlen(returnMsg)] = '{';
     sendMessage(sendToPort, returnMsg);
-    memset(message, 0, 4096); // if we use queue, we would delete the char* here instead of memset. this memset would move up to after we add the copy of buffer to the array.
+    memset(message, 0, 4096);
   }
 
   void terminate() {

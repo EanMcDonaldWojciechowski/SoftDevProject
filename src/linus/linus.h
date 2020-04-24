@@ -273,8 +273,6 @@ public:
       std::cout << "Reading...\n";
       projects = df->fromFile(PROJ, pK.clone(), kv);
       std::cout << "    "<< projects->nrows() << "\n  projects";
-      // projects->print();
-      // sleep(10);
       users = df->fromFile(USER, uK.clone(), kv);
       std::cout << "    "<< users->nrows() <<  users << "\n";
       commits = df->fromFile(COMM, cK.clone(), kv);
@@ -304,10 +302,6 @@ public:
   *  datafrrames (projects, users, commits), the sets of tagged users and
   *  projects, and the users added in the previous round. */
   void step(int stage) {
-    // kv->store->store->printall();
-    // std::cout << "inside STEP \n";
-    // std::cout << "Stage \n" << stage << "\n";
-    // Key of the shape: users-stage-0
     Key uK(StrBuff("users-").c(stage).c("-0").get()->c_str());
     // A df with all the users added on the previous round
     DataFrame* newUsers = dynamic_cast<DataFrame*>(kv->waitAndGet(&uK));
