@@ -39,12 +39,12 @@ int main(int argc, char** argv) {
   std::cout << "Printing DF" << "\n";
   // df->print();
 
-  KVStore *kv = new KVStore(nodeIndex);
+  KVStore *kv = new KVStore(nodeIndex, 3);
   Key *k = new Key("main", 0);
   kv->put(k, df);
   //DataFrame *newDF = kv->get(k);
   //std::cout << "Printing final DF" << "\n";
   //newDF->print();
-  sleep(12);
+  sleep(3);
   std::cout << "COMPLETED" << "\n";
 }

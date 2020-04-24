@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   // df->add_column(vals);
   // df->print();
 
-  KVStore *kv = new KVStore(nodeIndex);
+  KVStore *kv = new KVStore(nodeIndex, 3);
   Key *k = new Key("main", 0);
   // kv->put(k, df);
   // sleep(4);
@@ -25,6 +25,6 @@ int main(int argc, char** argv) {
   // DataFrame *newDF = kv->waitAndGet(k);
   std::cout << "Printing final DF" << "\n";
   newDF->print();
-  // sleep(10);
+  sleep(1);
   std::cout << "COMPLETED" << "\n";
 }
