@@ -4,6 +4,8 @@ Ean Wojciechowski and Hiren Patel
 Software Development
 04/06/2020
 
+EAN CHANGED FROM LIVE SHARE
+
 Introduction: where we give a high-level description of the eau2 system.
 
 The eau2 system will be able to store and provide functionality on large data sets. The goal of the eau2 system is to provide a means to store large dataframes (100GB) across a distributed network of nodes. Each node will be responsible for a subset of the large dataset, allowing users of our application to analyze or modify the dataset with speed.
@@ -177,3 +179,4 @@ What are the main differences between get and waitandget? Does wait and get just
 Status: where you describe what has been done and give an estimate of the work that remains.
 
 We are 95% done with the assignment, but we really struggled this week meshing our code with the provided wordCounter. We are mostly certain that our distributed KVStore and data frames work, but we are having issues with pointers and memory copies in SIMap, which uses our Array class under the hood. We ran out of time to fully integrate this wordCounter on top of our Application class.
+
